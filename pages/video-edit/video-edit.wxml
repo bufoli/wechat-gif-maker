@@ -11,16 +11,20 @@
         class="video-player"
         controls="{{false}}"
         show-center-play-btn="{{true}}"
+        show-play-btn="{{true}}"
         enable-play-gesture="{{true}}"
+        enable-progress-gesture="{{false}}"
         object-fit="contain"
         initial-time="0"
         autoplay="{{false}}"
         loop="{{false}}"
-        muted="{{false}}"
+        muted="{{true}}"
         show-fullscreen-btn="{{false}}"
+        play-btn-position="center"
         bindloadedmetadata="onVideoLoadedMetadata"
         binderror="onVideoError"
         bindload="onVideoLoad"
+        bindwaiting="onVideoWaiting"
         bindtimeupdate="onVideoTimeUpdate"
         bindplay="onVideoPlay"
         bindpause="onVideoPause"
@@ -109,7 +113,7 @@
 
   <!-- 导出按钮区域 -->
   <view class="export-section">
-    <button class="export-btn" bindtap="onExportGIF">导出表情包GIF文件</button>
+    <button class="export-btn" bindtap="onExportGIF">导出GIF表情包文件</button>
     <view class="export-hint">
       <text>图片帧率12fps，尺寸240×240 px，大小小于500kb</text>
     </view>

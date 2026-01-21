@@ -21,6 +21,7 @@ Page({
   onLoad(options) {
     const videoPath = decodeURIComponent(options.videoPath || '')
     console.log('接收到的视频路径:', videoPath)
+    console.log('原始参数:', options)
     
     if (!videoPath) {
       wx.showToast({
@@ -33,10 +34,33 @@ Page({
       return
     }
 
+    // 验证视频路径格式
+    if (!videoPath.startsWith('http://') && !videoPath.startsWith('https://') && !videoPath.startsWith('wxfile://') && !videoPath.startsWith('file://')) {
+      console.warn('视频路径格式可能不正确:', videoPath)
+    }
+
+    // 设置视频路径
     this.setData({ 
       videoPath: videoPath,
       trimEnd: Math.min(this.data.videoDuration, 10)
     })
+    
+    // 延迟初始化视频上下文，确保组件已渲染
+    this.videoContext = null
+    setTimeout(() => {
+      try {
+        this.videoContext = wx.createVideoContext('videoPlayer', this)
+        if (this.videoContext) {
+          console.log('视频上下文创建成功')
+          // 设置初始时间
+          this.videoContext.seek(0)
+        } else {
+          console.error('视频上下文创建失败')
+        }
+      } catch (e) {
+        console.error('创建视频上下文异常:', e)
+      }
+    }, 800)
   },
 
   // 视频元数据加载完成
@@ -44,30 +68,51 @@ Page({
     console.log('视频元数据加载完成:', e.detail)
     const duration = e.detail.duration
     if (duration && duration > 0) {
+      console.log('视频时长:', duration, '秒')
       this.setData({
         videoDuration: duration,
         trimEnd: Math.min(duration, 10)
       })
+    } else {
+      console.warn('视频时长获取失败，使用默认值')
     }
   },
 
   // 视频加载完成
   onVideoLoad(e) {
     console.log('视频加载完成:', e.detail)
+    console.log('当前视频路径:', this.data.videoPath)
+    // 确保视频上下文已创建
+    if (!this.videoContext) {
+      this.videoContext = wx.createVideoContext('videoPlayer', this)
+      console.log('视频加载时创建视频上下文')
+    }
+  },
+
+  // 视频等待加载
+  onVideoWaiting(e) {
+    console.log('视频等待加载:', e.detail)
   },
 
   // 视频加载错误
   onVideoError(e) {
     console.error('视频播放错误:', e.detail)
-    wx.showToast({
+    console.error('错误详情:', JSON.stringify(e.detail))
+    console.error('视频路径:', this.data.videoPath)
+    wx.showModal({
       title: '视频加载失败',
-      icon: 'none'
+      content: `错误信息: ${e.detail.errMsg || '未知错误'}\n\n视频路径: ${this.data.videoPath}`,
+      showCancel: false
     })
   },
 
   // 视频播放控制 - 只播放选中区域
   togglePlay() {
-    const videoContext = wx.createVideoContext('videoPlayer', this)
+    if (!this.videoContext) {
+      this.videoContext = wx.createVideoContext('videoPlayer', this)
+    }
+    
+    const videoContext = this.videoContext
     if (this.data.isPlaying) {
       videoContext.pause()
     } else {
@@ -93,9 +138,13 @@ Page({
     const trimStart = this.data.trimStart
     const trimEnd = this.data.trimEnd
     
+    if (!this.videoContext) {
+      this.videoContext = wx.createVideoContext('videoPlayer', this)
+    }
+    const videoContext = this.videoContext
+    
     // 如果播放到选中区域的结束位置，自动停止并回到开始位置
     if (currentTime >= trimEnd) {
-      const videoContext = wx.createVideoContext('videoPlayer', this)
       videoContext.pause()
       videoContext.seek(trimStart)
       this.setData({ isPlaying: false, currentTime: trimStart })
@@ -104,7 +153,6 @@ Page({
     
     // 如果播放时间小于选中区域的开始位置，跳转到开始位置
     if (currentTime < trimStart) {
-      const videoContext = wx.createVideoContext('videoPlayer', this)
       videoContext.seek(trimStart)
       this.setData({ currentTime: trimStart })
       return
@@ -125,8 +173,10 @@ Page({
 
   // 视频结束
   onVideoEnded() {
-    const videoContext = wx.createVideoContext('videoPlayer', this)
-    videoContext.seek(this.data.trimStart)
+    if (!this.videoContext) {
+      this.videoContext = wx.createVideoContext('videoPlayer', this)
+    }
+    this.videoContext.seek(this.data.trimStart)
     this.setData({ isPlaying: false, currentTime: this.data.trimStart })
   },
 
@@ -140,8 +190,10 @@ Page({
         const time = Math.max(0, Math.min(this.data.videoDuration, percent * this.data.videoDuration))
         
         // 跳转到指定时间
-        const videoContext = wx.createVideoContext('videoPlayer', this)
-        videoContext.seek(time)
+        if (!this.videoContext) {
+          this.videoContext = wx.createVideoContext('videoPlayer', this)
+        }
+        this.videoContext.seek(time)
         this.setData({ currentTime: time })
       }
     }).exec()
@@ -166,8 +218,10 @@ Page({
   // 时间轴触摸结束
   onTimelineTouchEnd(e) {
     if (!this.data.draggingStart && !this.data.draggingEnd) {
-      const videoContext = wx.createVideoContext('videoPlayer', this)
-      videoContext.seek(this.data.currentTime)
+      if (!this.videoContext) {
+        this.videoContext = wx.createVideoContext('videoPlayer', this)
+      }
+      this.videoContext.seek(this.data.currentTime)
     }
   },
 
@@ -198,11 +252,15 @@ Page({
         const deltaTime = (deltaX / rect.width) * this.data.videoDuration
         const newTime = Math.max(0, Math.min(this.data.videoDuration, this.data.dragStartTime + deltaTime))
         
+        if (!this.videoContext) {
+          this.videoContext = wx.createVideoContext('videoPlayer', this)
+        }
+        const videoContext = this.videoContext
+        
         if (this.data.draggingStart) {
           // 拖动开始手柄
           if (newTime < this.data.trimEnd - 0.5) {
             this.setData({ trimStart: newTime })
-            const videoContext = wx.createVideoContext('videoPlayer', this)
             videoContext.seek(newTime)
             this.setData({ currentTime: newTime })
           }
@@ -210,7 +268,6 @@ Page({
           // 拖动结束手柄
           if (newTime > this.data.trimStart + 0.5) {
             this.setData({ trimEnd: newTime })
-            const videoContext = wx.createVideoContext('videoPlayer', this)
             videoContext.seek(newTime)
             this.setData({ currentTime: newTime })
           }
