@@ -1,0 +1,31 @@
+// pages/video-edit/utils.wxs
+// WXS 工具函数，用于格式化数字
+
+// 格式化数字，保留指定位小数
+function toFixed(num, digits) {
+  if (num === undefined || num === null) {
+    return '0'
+  }
+  var n = parseFloat(num)
+  if (isNaN(n)) {
+    return '0'
+  }
+  return n.toFixed(digits)
+}
+
+// 格式化百分比（0-1转为0-100）
+function toPercent(num, digits) {
+  if (num === undefined || num === null) {
+    return '0'
+  }
+  var n = parseFloat(num) * 100
+  if (isNaN(n)) {
+    return '0'
+  }
+  return n.toFixed(digits || 0)
+}
+
+module.exports = {
+  toFixed: toFixed,
+  toPercent: toPercent
+}

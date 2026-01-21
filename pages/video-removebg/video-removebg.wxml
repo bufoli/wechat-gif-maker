@@ -1,0 +1,133 @@
+<!--pages/video-removebg/video-removebg.wxml-->
+<wxs module="utils" src="../video-edit/utils.wxs"></wxs>
+<view class="container">
+  <!-- 视频预览区域 -->
+  <view class="preview-section">
+    <view class="preview-wrapper" bindtap="onVideoTap">
+      <video 
+        id="videoPlayer"
+        src="{{videoPath}}" 
+        class="video-player"
+        controls="{{false}}"
+        show-center-play-btn="{{true}}"
+        enable-play-gesture="{{true}}"
+        object-fit="contain"
+        bindtimeupdate="onVideoTimeUpdate"
+        bindplay="onVideoPlay"
+        bindpause="onVideoPause"
+        bindended="onVideoEnded"
+        binderror="onVideoError"
+        bindloadedmetadata="onVideoLoadedMetadata"
+      ></video>
+      
+      <!-- 抠图遮罩层（用于透明显示） -->
+      <canvas 
+        wx:if="{{isColorPicking || hasProcessed}}"
+        canvas-id="chromaCanvas" 
+        class="chroma-canvas"
+        bindtouchstart="onCanvasTouchStart"
+        bindtouchmove="onCanvasTouchMove"
+      ></canvas>
+    </view>
+  </view>
+
+  <!-- iOS风格时间轴组件 -->
+  <view class="timeline-section">
+    <view class="timeline-container">
+      <!-- 播放按钮 -->
+      <view class="play-btn-wrapper">
+        <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
+          <view class="play-icon-triangle" wx:if="{{!isPlaying}}"></view>
+          <view class="play-icon-pause" wx:else>
+            <view class="pause-line"></view>
+            <view class="pause-line"></view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 时间轴 -->
+      <view class="timeline-wrapper">
+        <view 
+          class="timeline-track" 
+          bindtouchstart="onTimelineTouchStart" 
+          bindtouchmove="onTimelineTouchMove" 
+          bindtouchend="onTimelineTouchEnd"
+        >
+          <!-- 背景进度条 -->
+          <view class="timeline-bg">
+            <view class="timeline-progress" style="width: {{(currentTime / videoDuration) * 100}}%"></view>
+          </view>
+          
+          <!-- 选择框 -->
+          <view 
+            class="timeline-selection" 
+            style="left: {{(trimStart / videoDuration) * 100}}%; width: {{((trimEnd - trimStart) / videoDuration) * 100}}%"
+          >
+            <!-- 开始拖拽手柄 -->
+            <view 
+              class="timeline-handle timeline-handle-start"
+              data-type="start"
+              bindtouchstart="onHandleTouchStart"
+              bindtouchmove="onHandleTouchMove"
+              bindtouchend="onHandleTouchEnd"
+            ></view>
+            
+            <!-- 结束拖拽手柄 -->
+            <view 
+              class="timeline-handle timeline-handle-end"
+              data-type="end"
+              bindtouchstart="onHandleTouchStart"
+              bindtouchmove="onHandleTouchMove"
+              bindtouchend="onHandleTouchEnd"
+            ></view>
+          </view>
+          
+          <!-- 当前播放位置指示器 -->
+          <view 
+            class="timeline-indicator" 
+            style="left: {{(currentTime / videoDuration) * 100}}%"
+            wx:if="{{isPlaying}}"
+          ></view>
+        </view>
+        
+        <!-- 时间标签 -->
+        <view class="timeline-labels">
+          <text class="time-label">{{utils.toFixed(trimStart, 1)}}s</text>
+          <text class="time-label">{{utils.toFixed(trimEnd, 1)}}s</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 抠图操作控件 -->
+  <view class="removebg-controls">
+    <!-- 提取颜色按钮 -->
+    <view 
+      class="color-picker-btn {{isColorPicking ? 'active' : ''}}" 
+      bindtap="toggleColorPicking"
+    >
+      <view class="eyedropper-icon"></view>
+    </view>
+    
+    <!-- 色彩范围滑杆 -->
+    <view class="color-range-slider-wrapper">
+      <slider 
+        class="color-range-slider"
+        min="0" 
+        max="100" 
+        value="{{colorRange}}" 
+        bindchange="onColorRangeChange" 
+        activeColor="#D8B4FE"
+        backgroundColor="#e5e5e5"
+        block-color="#D8B4FE"
+        block-size="20"
+      />
+      <view class="color-range-label">范围: {{colorRange}}%</view>
+    </view>
+    
+    <!-- 确认按钮 -->
+    <view class="confirm-btn" bindtap="confirmRemoveBg">
+      <view class="check-icon"></view>
+    </view>
+  </view>
+</view>

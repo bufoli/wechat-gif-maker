@@ -1,0 +1,282 @@
+/* pages/video-text/video-text.wxss */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.preview-section {
+  flex-shrink: 0;
+  background: #000;
+  position: relative;
+}
+
+.preview-wrapper {
+  width: 100%;
+  height: 500rpx;
+  position: relative;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+}
+
+.text-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.text-item {
+  position: absolute;
+  pointer-events: auto;
+  border: 2rpx solid transparent;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  transform-origin: center center;
+}
+
+.text-item.active {
+  border-color: #D8B4FE;
+  background: rgba(216, 180, 254, 0.2);
+}
+
+.text-content {
+  white-space: nowrap;
+  text-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.8);
+}
+
+.text-controls {
+  position: absolute;
+  top: -60rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10rpx;
+}
+
+.text-control-btn {
+  padding: 8rpx 16rpx;
+  background: #D8B4FE;
+  color: #fff;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+
+/* iOS风格时间轴组件 */
+.timeline-section {
+  flex-shrink: 0;
+  background: #fff;
+  padding: 30rpx 20rpx;
+  border-top: 1rpx solid #e5e5e5;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.timeline-container {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  width: 100%;
+}
+
+.play-btn-wrapper {
+  flex-shrink: 0;
+}
+
+.play-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
+  background: #007AFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 122, 255, 0.3);
+}
+
+.play-btn:active {
+  transform: scale(0.95);
+}
+
+.play-icon-triangle {
+  width: 0;
+  height: 0;
+  border-left: 24rpx solid #fff;
+  border-top: 16rpx solid transparent;
+  border-bottom: 16rpx solid transparent;
+  margin-left: 6rpx;
+}
+
+.play-icon-pause {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.pause-line {
+  width: 8rpx;
+  height: 28rpx;
+  background: #fff;
+  border-radius: 2rpx;
+}
+
+.timeline-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.timeline-track {
+  position: relative;
+  height: 60rpx;
+  background: #f0f0f0;
+  border-radius: 30rpx;
+  overflow: hidden;
+}
+
+.timeline-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #e5e5e5;
+}
+
+.timeline-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #007AFF;
+  transition: width 0.1s linear;
+}
+
+.timeline-selection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 122, 255, 0.2);
+  border: 2rpx solid #007AFF;
+  border-radius: 30rpx;
+  z-index: 10;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24rpx;
+  height: 60rpx;
+  background: #007AFF;
+  border-radius: 12rpx;
+  z-index: 20;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.timeline-handle-start {
+  left: -12rpx;
+}
+
+.timeline-handle-end {
+  right: -12rpx;
+}
+
+.timeline-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4rpx;
+  background: #fff;
+  z-index: 15;
+  transform: translateX(-50%);
+  box-shadow: 0 0 4rpx rgba(0, 0, 0, 0.3);
+}
+
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10rpx;
+}
+
+.time-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.text-toolbar {
+  flex-shrink: 0;
+  background: #fff;
+  padding: 30rpx;
+  border-top: 1rpx solid #e5e5e5;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.text-input-section {
+  margin-bottom: 30rpx;
+}
+
+.text-input {
+  width: 100%;
+  padding: 20rpx;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+}
+
+.font-selector {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+  flex-wrap: wrap;
+}
+
+.font-item {
+  flex: 1;
+  min-width: 140rpx;
+  padding: 20rpx;
+  border: 2rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.font-item.active {
+  border-color: #007AFF;
+  background: #f0f7ff;
+  color: #007AFF;
+}
+
+.text-toolbar-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.text-confirm-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #D8B4FE;
+  color: #fff;
+  border: none;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.text-confirm-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}

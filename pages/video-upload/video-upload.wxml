@@ -1,0 +1,34 @@
+<!--pages/video-upload/video-upload.wxml-->
+<view class="container">
+  <view class="tip-box">
+    <view class="tip-title">📌 上传提示</view>
+    <view class="tip-content">建议上传10s之内的方形纯绿色或者蓝色背景的视频。</view>
+  </view>
+
+  <view class="upload-area">
+    <block wx:if="{{!videoPath}}">
+      <view class="upload-btn" bindtap="chooseVideo">
+        <view class="upload-icon">📹</view>
+        <view class="upload-text">点击上传视频</view>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="video-preview">
+        <video 
+          src="{{videoPath}}" 
+          class="video-player"
+          controls
+          show-center-play-btn
+        ></video>
+        <view class="video-info" wx:if="{{videoInfo}}">
+          <text>时长: {{videoInfo.duration}}秒</text>
+          <text>尺寸: {{videoInfo.width}}×{{videoInfo.height}}</text>
+        </view>
+        <view class="video-actions">
+          <button class="btn-reselect" bindtap="reselect">重新选择</button>
+          <button class="btn-edit" bindtap="goToEdit">进入编辑</button>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

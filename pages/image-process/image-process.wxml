@@ -1,0 +1,111 @@
+<!--pages/image-process/image-process.wxml-->
+<view class="container">
+  <scroll-view class="content" scroll-y>
+    <!-- 横幅上传 -->
+    <view class="upload-section">
+      <view class="section-header">
+        <text class="section-title">横幅</text>
+        <text class="section-size">750×400 px</text>
+      </view>
+      <view class="upload-box">
+        <block wx:if="{{!bannerImage}}">
+          <view class="upload-placeholder" bindtap="chooseBanner">
+            <view class="upload-icon">📷</view>
+            <view class="upload-text">点击上传</view>
+            <view class="upload-hint">上传后自动裁剪</view>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="image-preview">
+            <image src="{{bannerImage}}" mode="aspectFit" class="preview-image"></image>
+            <view class="image-overlay">
+              <text class="reselect-btn" data-type="banner" bindtap="reselectImage">重新选择</text>
+            </view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 头像上传 -->
+    <view class="upload-section">
+      <view class="section-header">
+        <text class="section-title">头像</text>
+        <text class="section-size">240×240 px</text>
+      </view>
+      <view class="upload-box avatar-box">
+        <block wx:if="{{!avatarImage}}">
+          <view class="upload-placeholder" bindtap="chooseAvatar">
+            <view class="upload-icon">👤</view>
+            <view class="upload-text">点击上传</view>
+            <view class="upload-hint">上传后自动裁剪</view>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="image-preview">
+            <image src="{{avatarImage}}" mode="aspectFit" class="preview-image"></image>
+            <view class="image-overlay">
+              <text class="reselect-btn" data-type="avatar" bindtap="reselectImage">重新选择</text>
+            </view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 图标上传 -->
+    <view class="upload-section">
+      <view class="section-header">
+        <text class="section-title">图标</text>
+        <text class="section-size">50×50 px</text>
+      </view>
+      <view class="upload-box icon-box">
+        <block wx:if="{{!iconImage}}">
+          <view class="upload-placeholder" bindtap="chooseIcon">
+            <view class="upload-icon">🎨</view>
+            <view class="upload-text">点击上传</view>
+            <view class="upload-hint">上传后自动扣除背景</view>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="image-preview">
+            <image src="{{iconImage}}" mode="aspectFit" class="preview-image"></image>
+            <view class="image-overlay">
+              <text class="reselect-btn" data-type="icon" bindtap="reselectImage">重新选择</text>
+            </view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 导出按钮 -->
+    <view class="export-section">
+      <button 
+        class="export-btn" 
+        bindtap="exportAll"
+        disabled="{{exporting}}"
+      >
+        {{exporting ? '导出中...' : '一键导出三张PNG图片'}}
+      </button>
+      <view class="export-hint">导出时自动压缩到500KB以内</view>
+    </view>
+  </scroll-view>
+
+  <!-- 裁剪模态框 -->
+  <view class="crop-modal" wx:if="{{showCropModal}}" catchtouchmove="preventTouchMove">
+    <view class="crop-modal-content">
+      <view class="crop-header">
+        <text class="crop-title">裁剪图片</text>
+        <text class="crop-close" bindtap="closeCropModal">✕</text>
+      </view>
+      <view class="crop-body">
+        <!-- 这里应该使用图片裁剪组件 -->
+        <!-- 由于小程序限制，简化处理：直接使用原图 -->
+        <image src="{{cropImagePath}}" mode="aspectFit" class="crop-preview"></image>
+        <view class="crop-hint">目标尺寸: {{targetWidth}}×{{targetHeight}}px</view>
+      </view>
+      <view class="crop-footer">
+        <button class="crop-cancel" bindtap="closeCropModal">取消</button>
+        <button class="crop-confirm" bindtap="confirmCrop">确认</button>
+      </view>
+    </view>
+  </view>
+</view>

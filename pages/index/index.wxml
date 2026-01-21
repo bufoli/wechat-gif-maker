@@ -1,0 +1,22 @@
+<!--index.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <view class="top-spacer"></view>
+    <view class="content-wrapper">
+      <view class="header">
+        <view class="app-title">透明底表情包制作工具</view>
+      </view>
+
+      <view class="upload-square" bindtap="chooseVideo">
+        <view class="plus">
+          <view class="plus-line plus-line-h"></view>
+          <view class="plus-line plus-line-v"></view>
+        </view>
+      </view>
+      <view class="upload-hint">
+        <text>请上传10s以内纯绿色或纯蓝色的视频</text>
+      </view>
+    </view>
+    <view class="bottom-spacer"></view>
+  </view>
+</scroll-view>

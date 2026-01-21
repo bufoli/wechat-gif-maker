@@ -1,0 +1,117 @@
+<!--pages/video-edit/video-edit.wxml-->
+<wxs module="utils" src="./utils.wxs"></wxs>
+<view class="container">
+  <!-- 视频预览区域 -->
+  <view class="preview-section">
+    <view class="preview-wrapper">
+      <video 
+        wx:if="{{videoPath}}"
+        id="videoPlayer"
+        src="{{videoPath}}" 
+        class="video-player"
+        controls="{{false}}"
+        show-center-play-btn="{{true}}"
+        enable-play-gesture="{{true}}"
+        object-fit="contain"
+        initial-time="0"
+        autoplay="{{false}}"
+        loop="{{false}}"
+        muted="{{false}}"
+        show-fullscreen-btn="{{false}}"
+        bindloadedmetadata="onVideoLoadedMetadata"
+        binderror="onVideoError"
+        bindload="onVideoLoad"
+        bindtimeupdate="onVideoTimeUpdate"
+        bindplay="onVideoPlay"
+        bindpause="onVideoPause"
+        bindended="onVideoEnded"
+      ></video>
+      <view wx:else class="video-placeholder">
+        <text>视频加载中...</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- iOS风格时间轴组件 -->
+  <view class="timeline-section">
+    <view class="timeline-container">
+      <!-- 播放按钮 -->
+      <view class="play-btn-wrapper">
+        <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
+          <view class="play-icon-triangle" wx:if="{{!isPlaying}}"></view>
+          <view class="play-icon-pause" wx:else>
+            <view class="pause-line"></view>
+            <view class="pause-line"></view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 时间轴 -->
+      <view class="timeline-wrapper">
+        <view 
+          class="timeline-track" 
+          bindtouchstart="onTimelineTouchStart" 
+          bindtouchmove="onTimelineTouchMove" 
+          bindtouchend="onTimelineTouchEnd"
+        >
+          <!-- 背景进度条 -->
+          <view class="timeline-bg">
+            <view class="timeline-progress" style="width: {{(currentTime / videoDuration) * 100}}%"></view>
+          </view>
+          
+          <!-- 选择框 -->
+          <view 
+            class="timeline-selection" 
+            style="left: {{(trimStart / videoDuration) * 100}}%; width: {{((trimEnd - trimStart) / videoDuration) * 100}}%"
+          >
+            <!-- 开始拖拽手柄 -->
+            <view 
+              class="timeline-handle timeline-handle-start"
+              data-type="start"
+              bindtouchstart="onHandleTouchStart"
+              bindtouchmove="onHandleTouchMove"
+              bindtouchend="onHandleTouchEnd"
+            ></view>
+            
+            <!-- 结束拖拽手柄 -->
+            <view 
+              class="timeline-handle timeline-handle-end"
+              data-type="end"
+              bindtouchstart="onHandleTouchStart"
+              bindtouchmove="onHandleTouchMove"
+              bindtouchend="onHandleTouchEnd"
+            ></view>
+          </view>
+          
+          <!-- 当前播放位置指示器 -->
+          <view 
+            class="timeline-indicator" 
+            style="left: {{(currentTime / videoDuration) * 100}}%"
+            wx:if="{{isPlaying}}"
+          ></view>
+        </view>
+        
+        <!-- 时间标签 -->
+        <view class="timeline-labels">
+          <text class="time-label">{{utils.toFixed(trimStart, 1)}}s</text>
+          <text class="time-label">{{utils.toFixed(trimEnd, 1)}}s</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能按钮区域 -->
+  <view class="action-buttons">
+    <button class="action-btn" bindtap="onRemoveBgClick">抠图</button>
+    <button class="action-btn" bindtap="onCropClick">裁剪</button>
+    <button class="action-btn" bindtap="onAddTextClick">添加文字</button>
+  </view>
+
+  <!-- 导出按钮区域 -->
+  <view class="export-section">
+    <button class="export-btn" bindtap="onExportGIF">导出表情包GIF文件</button>
+    <view class="export-hint">
+      <text>图片帧率12fps，尺寸240×240 px，大小小于500kb</text>
+    </view>
+  </view>
+</view>
