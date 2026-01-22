@@ -30,6 +30,13 @@
       src="{{extractVideoPath}}"
       bindloadedmetadata="onVideoMetadataLoaded"
       binderror="onVideoError"
+      bindtimeupdate="onVideoTimeUpdate"
+      bindseeked="onVideoSeeked"
+      controls="{{false}}"
+      show-center-play-btn="{{false}}"
+      enable-play-gesture="{{false}}"
+      object-fit="contain"
+      muted="{{true}}"
     ></video>
     <canvas canvas-id="frameExtractCanvas" class="hidden-canvas"></canvas>
   </view>
