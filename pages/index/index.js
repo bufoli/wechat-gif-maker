@@ -526,7 +526,10 @@ Page({
               
               // 计算颜色距离阈值（更宽松的阈值，确保能抠除背景）
               // threshold是0-100，转换为0-441的颜色距离（RGB最大距离是sqrt(255^2*3)≈441）
-              const maxDistance = (threshold / 100) * 441
+              // 增加基础阈值，让抠图更容易成功
+              const baseThreshold = 50 // 基础阈值50，即使threshold是0也有50的容差
+              const maxDistance = baseThreshold + (threshold / 100) * 200 // 最大250的容差
+              console.log(`使用阈值: ${threshold}, 计算出的颜色距离阈值: ${maxDistance.toFixed(2)}`)
               
               let transparentPixels = 0
               let totalPixels = data.length / 4
