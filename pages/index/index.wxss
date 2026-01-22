@@ -118,3 +118,14 @@ page {
   height: 240px;
   z-index: -1;
 }
+
+/* 隐藏的Video */
+.hidden-video {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 240px;
+  height: 240px;
+  z-index: -1;
+  opacity: 0;
+}

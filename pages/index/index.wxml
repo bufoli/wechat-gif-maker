@@ -22,5 +22,15 @@
     <!-- 隐藏的Canvas用于背景检测和处理 -->
     <canvas canvas-id="bgDetectCanvas" class="hidden-canvas"></canvas>
     <canvas canvas-id="processCanvas" class="hidden-canvas"></canvas>
+    
+    <!-- 隐藏的Video和Canvas用于提取视频帧 -->
+    <video 
+      id="frameExtractVideo" 
+      class="hidden-video"
+      src="{{extractVideoPath}}"
+      bindloadedmetadata="onVideoMetadataLoaded"
+      binderror="onVideoError"
+    ></video>
+    <canvas canvas-id="frameExtractCanvas" class="hidden-canvas"></canvas>
   </view>
 </scroll-view>
