@@ -134,7 +134,10 @@ Page({
           })
 
           // 自动识别大面积纯色背景并抠除
+          console.log('开始自动识别背景并抠图，序列帧数量:', framesResult.frameUrls.length)
           const processedResult = await this.autoDetectAndRemoveBackground(framesResult.frameUrls)
+          console.log('背景识别完成，检测到的颜色:', processedResult.detectedColor)
+          console.log('处理后的序列帧数量:', processedResult.processedFrames.length)
           
           wx.hideLoading()
 
@@ -340,8 +343,6 @@ Page({
   // 检测背景颜色（分析图片边缘和角落，找出最常见的颜色）
   detectBackgroundColor(frameUrls) {
     return new Promise((resolve, reject) => {
-      // 简化实现：分析第一帧的边缘像素
-      // 实际应该分析多帧的边缘和角落区域
       const ctx = wx.createCanvasContext('bgDetectCanvas', this)
       
       // 使用第一帧进行分析（frameUrls[0] 应该是本地路径）
@@ -349,22 +350,42 @@ Page({
       ctx.drawImage(imagePath, 0, 0, 240, 240)
       ctx.draw(false, () => {
         setTimeout(() => {
-          // 获取边缘像素（四个角和边缘）
-          const edgePoints = [
-            { x: 0, y: 0 }, // 左上
-            { x: 239, y: 0 }, // 右上
-            { x: 0, y: 239 }, // 左下
-            { x: 239, y: 239 }, // 右下
-            { x: 120, y: 0 }, // 上中
-            { x: 120, y: 239 }, // 下中
-            { x: 0, y: 120 }, // 左中
-            { x: 239, y: 120 } // 右中
+          // 获取整个边缘区域的所有像素（更准确）
+          // 采样边缘区域：上边缘、下边缘、左边缘、右边缘
+          const edgeSamples = []
+          
+          // 上边缘（采样10个点）
+          for (let x = 0; x < 240; x += 24) {
+            edgeSamples.push({ x, y: 0 })
+          }
+          // 下边缘（采样10个点）
+          for (let x = 0; x < 240; x += 24) {
+            edgeSamples.push({ x, y: 239 })
+          }
+          // 左边缘（采样10个点）
+          for (let y = 0; y < 240; y += 24) {
+            edgeSamples.push({ x: 0, y })
+          }
+          // 右边缘（采样10个点）
+          for (let y = 0; y < 240; y += 24) {
+            edgeSamples.push({ x: 239, y })
+          }
+          
+          // 四个角落区域（每个角落采样5x5区域）
+          const cornerRegions = [
+            { x: 0, y: 0, w: 20, h: 20 }, // 左上
+            { x: 220, y: 0, w: 20, h: 20 }, // 右上
+            { x: 0, y: 220, w: 20, h: 20 }, // 左下
+            { x: 220, y: 220, w: 20, h: 20 } // 右下
           ]
           
+          // 获取所有边缘像素的颜色
           const colorCounts = {}
           let processedCount = 0
+          const totalSamples = edgeSamples.length + cornerRegions.length
           
-          edgePoints.forEach((point, index) => {
+          // 处理边缘采样点
+          edgeSamples.forEach((point) => {
             wx.canvasGetImageData({
               canvasId: 'bgDetectCanvas',
               x: point.x,
@@ -374,42 +395,114 @@ Page({
               success: (res) => {
                 const data = res.data
                 if (data && data.length >= 4) {
-                  const colorKey = `${data[0]},${data[1]},${data[2]}`
+                  // 将颜色量化到相近的颜色（容差±10）
+                  const r = Math.round(data[0] / 10) * 10
+                  const g = Math.round(data[1] / 10) * 10
+                  const b = Math.round(data[2] / 10) * 10
+                  const colorKey = `${r},${g},${b}`
                   colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1
                 }
                 processedCount++
                 
-                if (processedCount === edgePoints.length) {
-                  // 找出最常见的颜色
-                  let maxCount = 0
-                  let mostCommonColor = null
-                  for (const [colorKey, count] of Object.entries(colorCounts)) {
-                    if (count > maxCount) {
-                      maxCount = count
-                      mostCommonColor = colorKey
-                    }
-                  }
-                  
-                  if (mostCommonColor) {
-                    const [r, g, b] = mostCommonColor.split(',').map(Number)
-                    resolve({ r, g, b })
-                  } else {
-                    // 默认绿色
-                    resolve({ r: 0, g: 255, b: 0 })
-                  }
+                if (processedCount === totalSamples) {
+                  this.findMostCommonColor(colorCounts, resolve)
                 }
               },
               fail: () => {
                 processedCount++
-                if (processedCount === edgePoints.length) {
-                  resolve({ r: 0, g: 255, b: 0 }) // 默认绿色
+                if (processedCount === totalSamples) {
+                  this.findMostCommonColor(colorCounts, resolve)
                 }
               }
             })
           })
-        }, 200)
+          
+          // 处理角落区域
+          cornerRegions.forEach((region) => {
+            wx.canvasGetImageData({
+              canvasId: 'bgDetectCanvas',
+              x: region.x,
+              y: region.y,
+              width: region.w,
+              height: region.h,
+              success: (res) => {
+                const data = res.data
+                if (data && data.length >= region.w * region.h * 4) {
+                  // 采样角落区域的所有像素
+                  for (let i = 0; i < data.length; i += 4) {
+                    const r = Math.round(data[i] / 10) * 10
+                    const g = Math.round(data[i + 1] / 10) * 10
+                    const b = Math.round(data[i + 2] / 10) * 10
+                    const colorKey = `${r},${g},${b}`
+                    colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1
+                  }
+                }
+                processedCount++
+                
+                if (processedCount === totalSamples) {
+                  this.findMostCommonColor(colorCounts, resolve)
+                }
+              },
+              fail: () => {
+                processedCount++
+                if (processedCount === totalSamples) {
+                  this.findMostCommonColor(colorCounts, resolve)
+                }
+              }
+            })
+          })
+        }, 300) // 增加延迟确保Canvas绘制完成
       })
     })
+  },
+
+  // 找出最常见的颜色
+  findMostCommonColor(colorCounts, resolve) {
+    let maxCount = 0
+    let mostCommonColor = null
+    
+    for (const [colorKey, count] of Object.entries(colorCounts)) {
+      if (count > maxCount) {
+        maxCount = count
+        mostCommonColor = colorKey
+      }
+    }
+    
+    if (mostCommonColor && maxCount > 5) { // 至少要有5个像素匹配
+      const [r, g, b] = mostCommonColor.split(',').map(Number)
+      console.log(`检测到背景颜色: RGB(${r}, ${g}, ${b}), 匹配像素数: ${maxCount}`)
+      resolve({ r, g, b })
+    } else {
+      // 如果没有找到明显的纯色，尝试检测是否为绿色或蓝色
+      console.log('未找到明显的纯色背景，尝试检测绿色或蓝色')
+      
+      // 检查是否有接近纯绿色或纯蓝色的颜色
+      let greenCount = 0
+      let blueCount = 0
+      
+      for (const [colorKey, count] of Object.entries(colorCounts)) {
+        const [r, g, b] = colorKey.split(',').map(Number)
+        // 检查是否为绿色（G值高，R和B值低）
+        if (g > 200 && r < 100 && b < 100) {
+          greenCount += count
+        }
+        // 检查是否为蓝色（B值高，R和G值低）
+        if (b > 200 && r < 100 && g < 100) {
+          blueCount += count
+        }
+      }
+      
+      if (greenCount > blueCount && greenCount > 10) {
+        console.log('检测到绿色背景')
+        resolve({ r: 0, g: 255, b: 0 })
+      } else if (blueCount > greenCount && blueCount > 10) {
+        console.log('检测到蓝色背景')
+        resolve({ r: 0, g: 0, b: 255 })
+      } else {
+        console.log('使用默认绿色背景')
+        resolve({ r: 0, g: 255, b: 0 })
+      }
+    }
   },
 
   // 使用色度键处理单帧
@@ -419,63 +512,88 @@ Page({
       
       ctx.drawImage(frameUrl, 0, 0, 240, 240)
       ctx.draw(false, () => {
-        wx.canvasGetImageData({
-          canvasId: 'processCanvas',
-          x: 0,
-          y: 0,
-          width: 240,
-          height: 240,
-          success: (res) => {
-            const imageData = res.data
-            const data = new Uint8ClampedArray(imageData)
-            
-            for (let i = 0; i < data.length; i += 4) {
-              const r = data[i]
-              const g = data[i + 1]
-              const b = data[i + 2]
+        // 延迟确保图片绘制完成
+        setTimeout(() => {
+          wx.canvasGetImageData({
+            canvasId: 'processCanvas',
+            x: 0,
+            y: 0,
+            width: 240,
+            height: 240,
+            success: (res) => {
+              const imageData = res.data
+              const data = new Uint8ClampedArray(imageData)
               
-              const colorDistance = Math.sqrt(
-                Math.pow(r - targetColor.r, 2) +
-                Math.pow(g - targetColor.g, 2) +
-                Math.pow(b - targetColor.b, 2)
-              )
-              
+              // 计算颜色距离阈值（更宽松的阈值，确保能抠除背景）
+              // threshold是0-100，转换为0-441的颜色距离（RGB最大距离是sqrt(255^2*3)≈441）
               const maxDistance = (threshold / 100) * 441
               
-              if (colorDistance <= maxDistance) {
-                data[i + 3] = 0 // 设置为透明
+              let transparentPixels = 0
+              let totalPixels = data.length / 4
+              
+              for (let i = 0; i < data.length; i += 4) {
+                const r = data[i]
+                const g = data[i + 1]
+                const b = data[i + 2]
+                
+                // 计算颜色距离（欧氏距离）
+                const colorDistance = Math.sqrt(
+                  Math.pow(r - targetColor.r, 2) +
+                  Math.pow(g - targetColor.g, 2) +
+                  Math.pow(b - targetColor.b, 2)
+                )
+                
+                // 如果颜色在阈值范围内，设置为透明
+                if (colorDistance <= maxDistance) {
+                  data[i + 3] = 0 // 设置alpha为0（透明）
+                  transparentPixels++
+                }
               }
+              
+              console.log(`处理帧完成，透明像素: ${transparentPixels}/${totalPixels} (${Math.round(transparentPixels/totalPixels*100)}%)`)
+              
+              wx.canvasPutImageData({
+                canvasId: 'processCanvas',
+                x: 0,
+                y: 0,
+                width: 240,
+                height: 240,
+                data: data,
+                success: () => {
+                  // 延迟确保数据已写入
+                  setTimeout(() => {
+                    wx.canvasToTempFilePath({
+                      canvasId: 'processCanvas',
+                      x: 0,
+                      y: 0,
+                      width: 240,
+                      height: 240,
+                      destWidth: 240,
+                      destHeight: 240,
+                      fileType: 'png',
+                      quality: 1,
+                      success: (res) => {
+                        resolve(res.tempFilePath)
+                      },
+                      fail: (err) => {
+                        console.error('导出图片失败:', err)
+                        reject(err)
+                      }
+                    }, this)
+                  }, 100)
+                },
+                fail: (err) => {
+                  console.error('写入图片数据失败:', err)
+                  reject(err)
+                }
+              })
+            },
+            fail: (err) => {
+              console.error('获取图片数据失败:', err)
+              reject(err)
             }
-            
-            wx.canvasPutImageData({
-              canvasId: 'processCanvas',
-              x: 0,
-              y: 0,
-              width: 240,
-              height: 240,
-              data: data,
-              success: () => {
-                wx.canvasToTempFilePath({
-                  canvasId: 'processCanvas',
-                  x: 0,
-                  y: 0,
-                  width: 240,
-                  height: 240,
-                  destWidth: 240,
-                  destHeight: 240,
-                  fileType: 'png',
-                  quality: 1,
-                  success: (res) => {
-                    resolve(res.tempFilePath)
-                  },
-                  fail: reject
-                })
-              },
-              fail: reject
-            })
-          },
-          fail: reject
-        })
+          })
+        }, 200) // 增加延迟确保Canvas绘制完成
       })
     })
   }
