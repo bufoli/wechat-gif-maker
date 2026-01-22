@@ -118,12 +118,12 @@ Page({
 
   // 生成预览
   generatePreview() {
-    if (!this.data.croppedImage || !this.data.framePreview) {
+    if (!this.data.croppedImage || !this.data.framePath) {
       return
     }
 
     // 合成图片（用户照片 + 边框）
-    this.compositeImages(this.data.croppedImage, this.data.framePreview).then((resultPath) => {
+    this.compositeImages(this.data.croppedImage, this.data.framePath).then((resultPath) => {
       // 预览结果
       console.log('预览生成完成:', resultPath)
     }).catch((err) => {
@@ -133,7 +133,7 @@ Page({
 
   // 生成最终图片
   generateImage() {
-    if (!this.data.croppedImage || !this.data.framePreview) {
+    if (!this.data.croppedImage) {
       wx.showToast({
         title: '请先上传照片',
         icon: 'none'
@@ -149,7 +149,7 @@ Page({
     })
 
     // 合成图片
-    this.compositeImages(this.data.croppedImage, this.data.framePreview).then((resultPath) => {
+    this.compositeImages(this.data.croppedImage, this.data.framePath).then((resultPath) => {
       wx.hideLoading()
       this.setData({
         resultImage: resultPath,

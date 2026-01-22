@@ -51,4 +51,3 @@
 
 <!-- 隐藏的Canvas用于图片处理 -->
 <canvas canvas-id="cropCanvas" class="hidden-canvas"></canvas>
-<canvas canvas-id="compositeCanvas" class="hidden-canvas"></canvas>
