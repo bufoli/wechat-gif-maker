@@ -154,7 +154,7 @@ Page({
           const originalVideoPath = uploadRes.fileID || tempFilePath
           
           wx.navigateTo({
-            url: `/pages/video-edit/video-edit?processedFrames=${encodeURIComponent(processedFramesStr)}&originalFrames=${encodeURIComponent(originalFramesStr)}&detectedColor=${encodeURIComponent(colorInfoStr)}&threshold=30&originalVideoPath=${encodeURIComponent(originalVideoPath)}`
+            url: `/pages/video-edit/video-edit?processedFrames=${encodeURIComponent(processedFramesStr)}&originalFrames=${encodeURIComponent(originalFramesStr)}&detectedColor=${encodeURIComponent(colorInfoStr)}&threshold=50&originalVideoPath=${encodeURIComponent(originalVideoPath)}`
           })
           
         } catch (error) {
@@ -258,11 +258,11 @@ Page({
           try {
             // 先下载到本地
             const localFrameUrl = await this.downloadFrameToLocal(frameUrls[i])
-            // 然后处理
+            // 然后处理（使用更大的阈值，确保能抠除背景）
             const processedFrame = await this.processFrameWithChromaKey(
               localFrameUrl,
               detectedColor,
-              30 // 默认阈值
+              50 // 增加默认阈值到50，更容易抠除背景
             )
             processedFrames.push(processedFrame)
           } catch (err) {
@@ -292,7 +292,7 @@ Page({
             const processedFrame = await this.processFrameWithChromaKey(
               localFrameUrl,
               defaultColor,
-              30
+              50 // 增加默认阈值到50
             )
             processedFrames.push(processedFrame)
           } catch (err) {
@@ -468,9 +468,9 @@ Page({
       }
     }
     
-    if (mostCommonColor && maxCount > 5) { // 至少要有5个像素匹配
+    if (mostCommonColor && maxCount > 3) { // 降低要求，至少要有3个像素匹配
       const [r, g, b] = mostCommonColor.split(',').map(Number)
-      console.log(`检测到背景颜色: RGB(${r}, ${g}, ${b}), 匹配像素数: ${maxCount}`)
+      console.log(`✅ 检测到背景颜色: RGB(${r}, ${g}, ${b}), 匹配像素数: ${maxCount}`)
       resolve({ r, g, b })
     } else {
       // 如果没有找到明显的纯色，尝试检测是否为绿色或蓝色
@@ -492,14 +492,14 @@ Page({
         }
       }
       
-      if (greenCount > blueCount && greenCount > 10) {
-        console.log('检测到绿色背景')
+      if (greenCount > blueCount && greenCount > 5) {
+        console.log('✅ 检测到绿色背景，匹配像素数:', greenCount)
         resolve({ r: 0, g: 255, b: 0 })
-      } else if (blueCount > greenCount && blueCount > 10) {
-        console.log('检测到蓝色背景')
+      } else if (blueCount > greenCount && blueCount > 5) {
+        console.log('✅ 检测到蓝色背景，匹配像素数:', blueCount)
         resolve({ r: 0, g: 0, b: 255 })
       } else {
-        console.log('使用默认绿色背景')
+        console.log('⚠️ 未明确检测到纯色背景，使用默认绿色背景')
         resolve({ r: 0, g: 255, b: 0 })
       }
     }
@@ -550,7 +550,13 @@ Page({
                 }
               }
               
-              console.log(`处理帧完成，透明像素: ${transparentPixels}/${totalPixels} (${Math.round(transparentPixels/totalPixels*100)}%)`)
+              const transparentPercent = Math.round(transparentPixels/totalPixels*100)
+              console.log(`✅ 处理帧完成，透明像素: ${transparentPixels}/${totalPixels} (${transparentPercent}%)`)
+              
+              // 如果透明像素太少，可能是检测不准确，给出警告
+              if (transparentPercent < 10) {
+                console.warn(`⚠️ 警告：透明像素比例过低(${transparentPercent}%)，可能背景颜色检测不准确`)
+              }
               
               wx.canvasPutImageData({
                 canvasId: 'processCanvas',
