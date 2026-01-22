@@ -1,0 +1,35 @@
+<!--book-list.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <view class="header">
+      <view class="section-title">{{sectionName}}</view>
+      <view class="section-desc">选择一本绘本开始阅读</view>
+    </view>
+
+    <!-- 绘本列表 -->
+    <view class="book-grid">
+      <view 
+        class="book-item" 
+        wx:for="{{books}}" 
+        wx:key="id"
+        bindtap="selectBook"
+        data-book="{{item}}"
+      >
+        <image class="book-cover" src="{{item.cover}}" mode="aspectFill"></image>
+        <view class="book-info">
+          <view class="book-title">{{item.title}}</view>
+          <view class="book-author" wx:if="{{item.author}}">{{item.author}}</view>
+          <view class="book-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{books.length === 0}}">
+      <view class="empty-icon">📖</view>
+      <view class="empty-text">暂无绘本</view>
+    </view>
+  </view>
+</scroll-view>

@@ -3,29 +3,39 @@
   <view class="container">
     <view class="top-spacer"></view>
     <view class="content-wrapper">
+      <!-- 头部 -->
       <view class="header">
-        <view class="app-title">吉祥表情包制作工具</view>
-        <view class="subtitle">选择分类，上传照片，制作专属表情包</view>
+        <view class="app-title">朵吉儿童绘本屋</view>
+        <view class="subtitle">陪伴孩子成长的阅读时光</view>
       </view>
 
-      <!-- 分类列表 -->
-      <view class="category-list">
-        <view class="category-item" bindtap="selectCategory" data-category="gongxifacai">
-          <view class="category-icon">🎉</view>
-          <view class="category-name">恭喜发财</view>
-          <view class="category-desc">新年祝福，财源广进</view>
+      <!-- 三个板块 -->
+      <view class="section-list">
+        <view class="section-item" bindtap="selectSection" data-section="public">
+          <view class="section-icon">📚</view>
+          <view class="section-content">
+            <view class="section-name">公共版权免费绘本</view>
+            <view class="section-desc">经典童话故事，免费阅读</view>
+          </view>
+          <view class="section-arrow">›</view>
         </view>
 
-        <view class="category-item" bindtap="selectCategory" data-category="jixiangruyi">
-          <view class="category-icon">✨</view>
-          <view class="category-name">吉祥如意</view>
-          <view class="category-desc">吉祥祝福，万事如意</view>
+        <view class="section-item" bindtap="selectSection" data-section="original">
+          <view class="section-icon">✨</view>
+          <view class="section-content">
+            <view class="section-name">朵吉原创绘本</view>
+            <view class="section-desc">独家原创故事，精彩纷呈</view>
+          </view>
+          <view class="section-arrow">›</view>
         </view>
 
-        <view class="category-item" bindtap="selectCategory" data-category="tongyongzhufu">
-          <view class="category-icon">🎊</view>
-          <view class="category-name">通用祝福</view>
-          <view class="category-desc">通用祝福，适用广泛</view>
+        <view class="section-item" bindtap="selectSection" data-section="custom">
+          <view class="section-icon">🎨</view>
+          <view class="section-content">
+            <view class="section-name">私人订制绘本</view>
+            <view class="section-desc">专属定制，独一无二</view>
+          </view>
+          <view class="section-arrow">›</view>
         </view>
       </view>
     </view>

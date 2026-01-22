@@ -1,0 +1,43 @@
+<!--book-reader.wxml-->
+<view class="container">
+  <!-- 绘本页面 -->
+  <swiper 
+    class="book-swiper"
+    current="{{currentPage}}"
+    bindchange="onPageChange"
+    duration="{{300}}"
+    indicator-dots="{{false}}"
+  >
+    <swiper-item wx:for="{{pages}}" wx:key="index">
+      <view class="page-container">
+        <image class="page-image" src="{{item.image}}" mode="aspectFit"></image>
+        <view class="page-text" wx:if="{{item.text}}">{{item.text}}</view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 控制栏 -->
+  <view class="control-bar">
+    <view class="control-btn" bindtap="prevPage" disabled="{{currentPage === 0}}">
+      <text class="control-icon">‹</text>
+      <text class="control-text">上一页</text>
+    </view>
+    
+    <view class="page-indicator">
+      <text class="page-current">{{currentPage + 1}}</text>
+      <text class="page-separator">/</text>
+      <text class="page-total">{{totalPages}}</text>
+    </view>
+    
+    <view class="control-btn" bindtap="nextPage" disabled="{{currentPage === totalPages - 1}}">
+      <text class="control-text">下一页</text>
+      <text class="control-icon">›</text>
+    </view>
+  </view>
+
+  <!-- 自动播放按钮 -->
+  <view class="auto-play-btn" bindtap="toggleAutoPlay">
+    <text class="auto-play-icon">{{autoPlaying ? '⏸' : '▶'}}</text>
+    <text class="auto-play-text">{{autoPlaying ? '暂停' : '自动播放'}}</text>
+  </view>
+</view>

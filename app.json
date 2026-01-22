@@ -1,6 +1,9 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/book-list/book-list",
+    "pages/book-reader/book-reader",
+    "pages/custom-book/custom-book",
     "pages/frame-select/frame-select",
     "pages/image-edit/image-edit",
     "pages/video-upload/video-upload",
@@ -13,7 +16,7 @@
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "吉祥表情包制作工具",
+    "navigationBarTitleText": "朵吉儿童绘本屋",
     "navigationBarBackgroundColor": "#ffffff"
   },
   "style": "v2",

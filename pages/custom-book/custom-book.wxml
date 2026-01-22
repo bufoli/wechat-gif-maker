@@ -1,0 +1,87 @@
+<!--custom-book.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <view class="header">
+      <view class="title">私人订制绘本</view>
+      <view class="desc">上传照片，选择模板，生成专属绘本</view>
+    </view>
+
+    <!-- 步骤指示 -->
+    <view class="steps">
+      <view class="step-item {{step >= 1 ? 'active' : ''}}">
+        <view class="step-number">1</view>
+        <view class="step-text">选择模板</view>
+      </view>
+      <view class="step-line"></view>
+      <view class="step-item {{step >= 2 ? 'active' : ''}}">
+        <view class="step-number">2</view>
+        <view class="step-text">上传照片</view>
+      </view>
+      <view class="step-line"></view>
+      <view class="step-item {{step >= 3 ? 'active' : ''}}">
+        <view class="step-number">3</view>
+        <view class="step-text">生成绘本</view>
+      </view>
+    </view>
+
+    <!-- 步骤1：选择模板 -->
+    <view class="step-content" wx:if="{{step === 1}}">
+      <view class="template-grid">
+        <view 
+          class="template-item" 
+          wx:for="{{templates}}" 
+          wx:key="id"
+          bindtap="selectTemplate"
+          data-template="{{item}}"
+        >
+          <image class="template-preview" src="{{item.preview}}" mode="aspectFill"></image>
+          <view class="template-name">{{item.name}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 步骤2：上传照片 -->
+    <view class="step-content" wx:if="{{step === 2}}">
+      <view class="upload-section">
+        <view class="upload-hint">请上传 {{selectedTemplate.photoCount || 5}} 张照片</view>
+        <view class="photo-grid">
+          <view 
+            class="photo-item" 
+            wx:for="{{photos}}" 
+            wx:key="index"
+            bindtap="choosePhoto"
+            data-index="{{index}}"
+          >
+            <image wx:if="{{item}}" class="photo-img" src="{{item}}" mode="aspectFill"></image>
+            <view wx:else class="photo-placeholder">
+              <text class="photo-icon">📷</text>
+              <text class="photo-text">添加照片</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <button class="next-btn" bindtap="nextStep" disabled="{{!canNextStep}}">下一步</button>
+    </view>
+
+    <!-- 步骤3：生成绘本 -->
+    <view class="step-content" wx:if="{{step === 3}}">
+      <view class="generating-section">
+        <view class="generating-icon">✨</view>
+        <view class="generating-text">正在生成您的专属绘本...</view>
+        <view class="generating-progress">{{progress}}%</view>
+      </view>
+    </view>
+
+    <!-- 完成：预览绘本 -->
+    <view class="result-section" wx:if="{{resultBook}}">
+      <view class="result-title">绘本生成完成！</view>
+      <view class="result-cover">
+        <image class="cover-img" src="{{resultBook.cover}}" mode="aspectFit"></image>
+      </view>
+      <view class="result-actions">
+        <button class="action-btn primary" bindtap="previewBook">预览绘本</button>
+        <button class="action-btn secondary" bindtap="saveBook">保存绘本</button>
+      </view>
+    </view>
+  </view>
+</scroll-view>

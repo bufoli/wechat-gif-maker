@@ -1,39 +1,47 @@
 // index.js
 Page({
   data: {
-    categories: {
-      gongxifacai: {
-        name: '恭喜发财',
-        icon: '🎉',
-        desc: '新年祝福，财源广进'
+    sections: {
+      public: {
+        name: '公共版权免费绘本',
+        icon: '📚',
+        desc: '经典童话故事，免费阅读'
       },
-      jixiangruyi: {
-        name: '吉祥如意',
+      original: {
+        name: '朵吉原创绘本',
         icon: '✨',
-        desc: '吉祥祝福，万事如意'
+        desc: '独家原创故事，精彩纷呈'
       },
-      tongyongzhufu: {
-        name: '通用祝福',
-        icon: '🎊',
-        desc: '通用祝福，适用广泛'
+      custom: {
+        name: '私人订制绘本',
+        icon: '🎨',
+        desc: '专属定制，独一无二'
       }
     }
   },
 
   onLoad() {
     wx.setNavigationBarTitle({
-      title: '吉祥表情包制作工具'
+      title: '朵吉儿童绘本屋'
     })
   },
 
-  // 选择分类
-  selectCategory(e) {
-    const category = e.currentTarget.dataset.category
-    console.log('选择分类:', category)
+  // 选择板块
+  selectSection(e) {
+    const section = e.currentTarget.dataset.section
+    console.log('选择板块:', section)
     
-    // 跳转到分类页面
-    wx.navigateTo({
-      url: `/pages/frame-select/frame-select?category=${category}`
-    })
+    // 根据板块跳转到不同页面
+    if (section === 'custom') {
+      // 私人订制直接跳转到定制页面
+      wx.navigateTo({
+        url: '/pages/custom-book/custom-book'
+      })
+    } else {
+      // 公共版权和原创绘本跳转到列表页面
+      wx.navigateTo({
+        url: `/pages/book-list/book-list?section=${section}`
+      })
+    }
   }
 })
