@@ -676,24 +676,44 @@ Page({
 
   // 导出GIF
   async onExportGIF() {
-    // 测试模式提示
-    if (this.data.isTestMode) {
-      wx.showModal({
-        title: '测试模式',
-        content: '当前为测试模式，实际导出功能需要配置云函数。\n\n请参考"云开发配置详细步骤.md"文档配置framesToGif云函数。',
-        showCancel: false,
-        confirmText: '我知道了'
-      })
-      return
-    }
+    // 检查是否有可导出的序列帧
+    const framesToExport = this.data.processedFrames.length > 0 
+      ? this.data.processedFrames 
+      : this.data.frameUrls
 
-    if (this.data.frameUrls.length === 0) {
+    if (!framesToExport || framesToExport.length === 0) {
       wx.showToast({
         title: '没有可导出的序列帧',
         icon: 'none'
       })
       return
     }
+
+    // 如果是测试模式，提示但允许尝试导出
+    if (this.data.isTestMode) {
+      wx.showModal({
+        title: '提示',
+        content: '当前为测试模式。\n\n如果已配置framesToGif云函数，将尝试导出。\n\n如果未配置，请参考"云开发配置详细步骤.md"文档。',
+        showCancel: true,
+        cancelText: '取消',
+        confirmText: '继续导出',
+        success: (res) => {
+          if (!res.confirm) {
+            return // 用户取消
+          }
+          // 继续执行导出
+          this.doExportGIF(framesToExport)
+        }
+      })
+      return
+    }
+
+    // 正常模式直接导出
+    this.doExportGIF(framesToExport)
+  },
+
+  // 执行导出GIF
+  async doExportGIF(framesToExport) {
 
     wx.showLoading({
       title: '正在导出GIF...',
@@ -703,9 +723,7 @@ Page({
     try {
       // 调用云函数合成GIF
       const result = await frameUtils.framesToGif({
-        frameUrls: this.data.processedFrames.length > 0 
-          ? this.data.processedFrames 
-          : this.data.frameUrls,
+        frameUrls: framesToExport,
         chromaKey: {
           enabled: true,
           color: this.data.selectedColor,

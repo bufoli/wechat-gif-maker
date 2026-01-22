@@ -209,12 +209,26 @@ const framesToGif = (params) => {
           })
         } else {
           const errorMsg = res.result?.error || res.result?.message || 'GIF合成失败'
-          wx.showToast({
-            title: errorMsg,
-            icon: 'none',
-            duration: 3000
-          })
-          reject(new Error(errorMsg))
+          
+          // 检查是否是云函数代码未完善
+          if (errorMsg.includes('FFmpeg') || errorMsg.includes('需要配置') || res.result?.needsFFmpeg) {
+            wx.showModal({
+              title: '云函数代码需要完善',
+              content: res.result?.message || 'framesToGif云函数已部署，但代码需要完善。\n\n当前代码只是框架，需要添加FFmpeg处理逻辑才能实际合成GIF。\n\n请参考项目中的"完善云函数代码-详细步骤.md"文档。',
+              showCancel: false,
+              confirmText: '我知道了',
+              success: () => {
+                reject(new Error(errorMsg))
+              }
+            })
+          } else {
+            wx.showToast({
+              title: errorMsg,
+              icon: 'none',
+              duration: 3000
+            })
+            reject(new Error(errorMsg))
+          }
         }
       },
       fail: (err) => {
