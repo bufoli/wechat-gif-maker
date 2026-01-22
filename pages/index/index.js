@@ -142,7 +142,44 @@ Page({
               if (localFramesResult && localFramesResult.success && localFramesResult.frameUrls && localFramesResult.frameUrls.length > 0) {
                 // 本地处理成功，继续后续流程
                 console.log('✅ 本地提取帧成功，帧数:', localFramesResult.frameUrls.length)
-                framesResult = localFramesResult
+                
+                // 注意：由于小程序限制，提取的帧可能是占位符（视频路径）
+                // 我们需要直接对视频进行抠图处理
+                // 这里我们使用一个变通方案：直接对视频进行背景检测和抠图
+                
+                wx.showLoading({
+                  title: '正在识别背景并抠图...',
+                  mask: true
+                })
+                
+                // 直接对视频进行背景检测和抠图
+                // 由于无法提取真实帧，我们使用视频的第一帧进行检测
+                try {
+                  const processedResult = await this.processVideoDirectly(tempFilePath, duration)
+                  
+                  wx.hideLoading()
+                  
+                  // 跳转到编辑页
+                  const processedFramesStr = JSON.stringify(processedResult.processedFrames)
+                  const originalFramesStr = JSON.stringify(localFramesResult.frameUrls)
+                  const colorInfoStr = JSON.stringify({
+                    r: processedResult.detectedColor.r,
+                    g: processedResult.detectedColor.g,
+                    b: processedResult.detectedColor.b
+                  })
+                  
+                  wx.navigateTo({
+                    url: `/pages/video-edit/video-edit?processedFrames=${encodeURIComponent(processedFramesStr)}&originalFrames=${encodeURIComponent(originalFramesStr)}&detectedColor=${encodeURIComponent(colorInfoStr)}&threshold=60&originalVideoPath=${encodeURIComponent(tempFilePath)}`
+                  })
+                  
+                  return
+                } catch (processError) {
+                  wx.hideLoading()
+                  console.error('视频处理失败:', processError)
+                  // 处理失败，进入测试模式
+                  this.enterTestMode(tempFilePath, duration)
+                  return
+                }
               } else {
                 // 本地处理失败，进入测试模式
                 console.warn('本地处理失败，进入测试模式')
