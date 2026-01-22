@@ -1,0 +1,9 @@
+{
+  "name": "videoToFrames",
+  "version": "1.0.0",
+  "description": "将视频转换为序列帧",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

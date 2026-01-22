@@ -1,114 +1,97 @@
 <!--pages/video-edit/video-edit.wxml-->
-<wxs module="utils" src="./utils.wxs"></wxs>
 <view class="container">
-  <!-- 视频预览区域 -->
+  <!-- 序列帧预览区域 -->
   <view class="preview-section">
     <view class="preview-wrapper">
-      <video 
-        wx:if="{{videoPath}}"
-        id="videoPlayer"
-        src="{{videoPath}}" 
-        class="video-player"
-        controls="{{false}}"
-        show-center-play-btn="{{true}}"
-        show-play-btn="{{true}}"
-        enable-play-gesture="{{true}}"
-        enable-progress-gesture="{{false}}"
-        object-fit="contain"
-        initial-time="0"
-        autoplay="{{false}}"
-        loop="{{false}}"
-        muted="{{true}}"
-        show-fullscreen-btn="{{false}}"
-        play-btn-position="center"
-        bindloadedmetadata="onVideoLoadedMetadata"
-        binderror="onVideoError"
-        bindload="onVideoLoad"
-        bindwaiting="onVideoWaiting"
-        bindtimeupdate="onVideoTimeUpdate"
-        bindplay="onVideoPlay"
-        bindpause="onVideoPause"
-        bindended="onVideoEnded"
-      ></video>
-      <view wx:else class="video-placeholder">
-        <text>视频加载中...</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- iOS风格时间轴组件 -->
-  <view class="timeline-section">
-    <view class="timeline-container">
-      <!-- 播放按钮 -->
-      <view class="play-btn-wrapper">
-        <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
-          <view class="play-icon-triangle" wx:if="{{!isPlaying}}"></view>
-          <view class="play-icon-pause" wx:else>
-            <view class="pause-line"></view>
-            <view class="pause-line"></view>
+      <!-- 左侧：原始视频 -->
+      <view class="preview-item preview-left">
+        <view class="preview-label">原始视频</view>
+        <view class="preview-content">
+          <video 
+            wx:if="{{originalVideoPath}}"
+            id="originalVideo"
+            src="{{originalVideoPath}}" 
+            class="preview-video"
+            controls="{{false}}"
+            show-center-play-btn="{{false}}"
+            enable-play-gesture="{{true}}"
+            object-fit="contain"
+            muted="{{true}}"
+            loop="{{isPlaying}}"
+            autoplay="{{false}}"
+            bindplay="onOriginalVideoPlay"
+            binderror="onVideoError"
+          ></video>
+          <view wx:else class="video-placeholder">
+            <text>无原始视频</text>
           </view>
         </view>
       </view>
       
-      <!-- 时间轴 -->
-      <view class="timeline-wrapper">
-        <view 
-          class="timeline-track" 
-          bindtouchstart="onTimelineTouchStart" 
-          bindtouchmove="onTimelineTouchMove" 
-          bindtouchend="onTimelineTouchEnd"
-        >
-          <!-- 背景进度条 -->
-          <view class="timeline-bg">
-            <view class="timeline-progress" style="width: {{(currentTime / videoDuration) * 100}}%"></view>
-          </view>
+      <!-- 右侧：已抠图的序列帧 -->
+      <view class="preview-item preview-right">
+        <view class="preview-label">抠图效果</view>
+        <view class="preview-content">
+          <!-- 透明背景网格（用于显示透明效果） -->
+          <view class="transparent-grid" wx:if="{{hasProcessed}}"></view>
           
-          <!-- 选择框 -->
-          <view 
-            class="timeline-selection" 
-            style="left: {{(trimStart / videoDuration) * 100}}%; width: {{((trimEnd - trimStart) / videoDuration) * 100}}%"
-          >
-            <!-- 开始拖拽手柄 -->
-            <view 
-              class="timeline-handle timeline-handle-start"
-              data-type="start"
-              bindtouchstart="onHandleTouchStart"
-              bindtouchmove="onHandleTouchMove"
-              bindtouchend="onHandleTouchEnd"
-            ></view>
-            
-            <!-- 结束拖拽手柄 -->
-            <view 
-              class="timeline-handle timeline-handle-end"
-              data-type="end"
-              bindtouchstart="onHandleTouchStart"
-              bindtouchmove="onHandleTouchMove"
-              bindtouchend="onHandleTouchEnd"
-            ></view>
+          <!-- 显示序列帧图片 -->
+          <image 
+            wx:if="{{currentFrameUrl}}"
+            id="frameImage"
+            src="{{currentFrameUrl}}" 
+            class="preview-image"
+            mode="aspectFit"
+          ></image>
+          <view wx:else class="video-placeholder">
+            <text>加载中...</text>
           </view>
-          
-          <!-- 当前播放位置指示器 -->
-          <view 
-            class="timeline-indicator" 
-            style="left: {{(currentTime / videoDuration) * 100}}%"
-            wx:if="{{isPlaying}}"
-          ></view>
         </view>
-        
-        <!-- 时间标签 -->
-        <view class="timeline-labels">
-          <text class="time-label">{{utils.toFixed(trimStart, 1)}}s</text>
-          <text class="time-label">{{utils.toFixed(trimEnd, 1)}}s</text>
+      </view>
+      
+      <!-- 隐藏的Canvas用于处理抠图 -->
+      <canvas 
+        canvas-id="chromaCanvas" 
+        class="color-picker-canvas"
+        wx:if="{{!isTestMode}}"
+      ></canvas>
+      
+      <!-- 播放按钮（放在底部中间） -->
+      <view class="play-btn-overlay {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
+        <view class="play-icon-triangle" wx:if="{{!isPlaying}}"></view>
+        <view class="play-icon-pause" wx:else>
+          <view class="pause-line"></view>
+          <view class="pause-line"></view>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 功能按钮区域 -->
-  <view class="action-buttons">
-    <button class="action-btn" bindtap="onRemoveBgClick">抠图</button>
-    <button class="action-btn" bindtap="onCropClick">裁剪</button>
-    <button class="action-btn" bindtap="onAddTextClick">添加文字</button>
+  <!-- 控制区域 -->
+  <view class="control-section">
+
+    <!-- 抠图控制区域 -->
+    <view class="chroma-control">
+      <view class="control-title">调整抠图效果</view>
+      
+      <!-- 抠除范围滑杆 -->
+      <view class="slider-section">
+        <text class="slider-label">色彩容差：{{colorThreshold}}</text>
+        <slider 
+          value="{{colorThreshold}}" 
+          min="0" 
+          max="100" 
+          step="1"
+          show-value="{{false}}"
+          bindchange="onThresholdChange"
+          activeColor="#D8B4FE"
+          backgroundColor="#e5e5e5"
+        />
+        <view class="slider-hint">
+          <text>容差越大，抠除的颜色范围越大</text>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 导出按钮区域 -->

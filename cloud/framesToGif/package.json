@@ -1,0 +1,9 @@
+{
+  "name": "framesToGif",
+  "version": "1.0.0",
+  "description": "将序列帧合成为透明底GIF",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -18,5 +18,9 @@
       </view>
     </view>
     <view class="bottom-spacer"></view>
+    
+    <!-- 隐藏的Canvas用于背景检测和处理 -->
+    <canvas canvas-id="bgDetectCanvas" class="hidden-canvas"></canvas>
+    <canvas canvas-id="processCanvas" class="hidden-canvas"></canvas>
   </view>
 </scroll-view>

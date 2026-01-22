@@ -1,0 +1,9 @@
+{
+  "name": "videoResample",
+  "version": "1.0.0",
+  "description": "视频抽帧处理（转换为指定帧率）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

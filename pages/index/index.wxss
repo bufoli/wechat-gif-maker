@@ -108,3 +108,13 @@ page {
   color: #ffffff;
   line-height: 1.5;
 }
+
+/* 隐藏的Canvas */
+.hidden-canvas {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 240px;
+  height: 240px;
+  z-index: -1;
+}
