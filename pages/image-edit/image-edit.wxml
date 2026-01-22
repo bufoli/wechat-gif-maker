@@ -1,0 +1,54 @@
+<!--image-edit.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <view class="header">
+      <view class="title">上传照片</view>
+      <view class="desc">选择一张照片，我们将自动裁剪为正方形并添加边框</view>
+    </view>
+
+    <!-- 上传区域 -->
+    <view class="upload-section">
+      <view class="upload-box" bindtap="chooseImage" wx:if="{{!userImage}}">
+        <view class="upload-icon">📷</view>
+        <view class="upload-text">点击上传照片</view>
+      </view>
+      
+      <view class="image-preview" wx:else>
+        <image class="preview-img" src="{{userImage}}" mode="aspectFit"></image>
+        <view class="reupload-btn" bindtap="chooseImage">重新选择</view>
+      </view>
+    </view>
+
+    <!-- 预览区域 -->
+    <view class="preview-section" wx:if="{{userImage && framePreview}}">
+      <view class="preview-title">预览效果</view>
+      <view class="preview-container">
+        <canvas 
+          canvas-id="compositeCanvas" 
+          class="composite-canvas"
+          style="width: 480rpx; height: 480rpx;"
+        ></canvas>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-section" wx:if="{{userImage}}">
+      <button class="action-btn primary" bindtap="generateImage" disabled="{{generating}}">
+        {{generating ? '生成中...' : '生成表情包'}}
+      </button>
+    </view>
+
+    <!-- 结果展示 -->
+    <view class="result-section" wx:if="{{resultImage}}">
+      <view class="result-title">生成完成</view>
+      <view class="result-container">
+        <image class="result-img" src="{{resultImage}}" mode="aspectFit"></image>
+      </view>
+      <button class="action-btn primary" bindtap="saveImage">保存到相册</button>
+    </view>
+  </view>
+</scroll-view>
+
+<!-- 隐藏的Canvas用于图片处理 -->
+<canvas canvas-id="cropCanvas" class="hidden-canvas"></canvas>
+<canvas canvas-id="compositeCanvas" class="hidden-canvas"></canvas>

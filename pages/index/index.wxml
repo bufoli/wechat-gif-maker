@@ -4,40 +4,31 @@
     <view class="top-spacer"></view>
     <view class="content-wrapper">
       <view class="header">
-        <view class="app-title">透明底表情包制作工具</view>
+        <view class="app-title">吉祥表情包制作工具</view>
+        <view class="subtitle">选择分类，上传照片，制作专属表情包</view>
       </view>
 
-      <view class="upload-square" bindtap="chooseVideo">
-        <view class="plus">
-          <view class="plus-line plus-line-h"></view>
-          <view class="plus-line plus-line-v"></view>
+      <!-- 分类列表 -->
+      <view class="category-list">
+        <view class="category-item" bindtap="selectCategory" data-category="gongxifacai">
+          <view class="category-icon">🎉</view>
+          <view class="category-name">恭喜发财</view>
+          <view class="category-desc">新年祝福，财源广进</view>
         </view>
-      </view>
-      <view class="upload-hint">
-        <text>请上传10s以内纯绿色或纯蓝色的视频</text>
+
+        <view class="category-item" bindtap="selectCategory" data-category="jixiangruyi">
+          <view class="category-icon">✨</view>
+          <view class="category-name">吉祥如意</view>
+          <view class="category-desc">吉祥祝福，万事如意</view>
+        </view>
+
+        <view class="category-item" bindtap="selectCategory" data-category="tongyongzhufu">
+          <view class="category-icon">🎊</view>
+          <view class="category-name">通用祝福</view>
+          <view class="category-desc">通用祝福，适用广泛</view>
+        </view>
       </view>
     </view>
     <view class="bottom-spacer"></view>
-    
-    <!-- 隐藏的Canvas用于背景检测和处理 -->
-    <canvas canvas-id="bgDetectCanvas" class="hidden-canvas"></canvas>
-    <canvas canvas-id="processCanvas" class="hidden-canvas"></canvas>
-    
-    <!-- 隐藏的Video和Canvas用于提取视频帧 -->
-    <video 
-      id="frameExtractVideo" 
-      class="hidden-video"
-      src="{{extractVideoPath}}"
-      bindloadedmetadata="onVideoMetadataLoaded"
-      binderror="onVideoError"
-      bindtimeupdate="onVideoTimeUpdate"
-      bindseeked="onVideoSeeked"
-      controls="{{false}}"
-      show-center-play-btn="{{false}}"
-      enable-play-gesture="{{false}}"
-      object-fit="contain"
-      muted="{{true}}"
-    ></video>
-    <canvas canvas-id="frameExtractCanvas" class="hidden-canvas"></canvas>
   </view>
 </scroll-view>

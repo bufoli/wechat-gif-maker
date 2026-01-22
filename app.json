@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/frame-select/frame-select",
+    "pages/image-edit/image-edit",
     "pages/video-upload/video-upload",
     "pages/video-edit/video-edit",
     "pages/video-crop/video-crop",
@@ -11,7 +13,7 @@
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "透明底表情包制作工具",
+    "navigationBarTitleText": "吉祥表情包制作工具",
     "navigationBarBackgroundColor": "#ffffff"
   },
   "style": "v2",

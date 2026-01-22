@@ -1,0 +1,23 @@
+<!--frame-select.wxml-->
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <view class="header">
+      <view class="category-title">{{categoryName}}</view>
+      <view class="category-desc">选择一个边框样式</view>
+    </view>
+
+    <!-- 边框列表 -->
+    <view class="frame-grid">
+      <view 
+        class="frame-item" 
+        wx:for="{{frames}}" 
+        wx:key="id"
+        bindtap="selectFrame"
+        data-frame="{{item}}"
+      >
+        <image class="frame-preview" src="{{item.preview}}" mode="aspectFit"></image>
+        <view class="frame-name">{{item.name}}</view>
+      </view>
+    </view>
+  </view>
+</scroll-view>

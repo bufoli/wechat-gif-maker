@@ -1,0 +1,166 @@
+/* image-edit.wxss */
+.scrollarea {
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.container {
+  padding: 40rpx;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 16rpx;
+}
+
+.desc {
+  font-size: 28rpx;
+  color: #999999;
+}
+
+.upload-section {
+  margin-bottom: 60rpx;
+}
+
+.upload-box {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 80rpx 40rpx;
+  text-align: center;
+  border: 2rpx dashed #d0d0d0;
+  transition: all 0.3s ease;
+}
+
+.upload-box:active {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.upload-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.upload-text {
+  font-size: 32rpx;
+  color: #666666;
+}
+
+.image-preview {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  position: relative;
+}
+
+.preview-img {
+  width: 100%;
+  height: 480rpx;
+  border-radius: 12rpx;
+}
+
+.reupload-btn {
+  position: absolute;
+  top: 40rpx;
+  right: 40rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  padding: 12rpx 24rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.preview-section {
+  margin-bottom: 60rpx;
+}
+
+.preview-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.preview-container {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.composite-canvas {
+  width: 480rpx;
+  height: 480rpx;
+  border-radius: 12rpx;
+}
+
+.action-section {
+  margin-bottom: 60rpx;
+}
+
+.action-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+}
+
+.action-btn[disabled] {
+  background: #cccccc;
+  color: #999999;
+}
+
+.result-section {
+  margin-top: 60rpx;
+}
+
+.result-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.result-container {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.result-img {
+  width: 480rpx;
+  height: 480rpx;
+  border-radius: 12rpx;
+}
+
+.hidden-canvas {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 240px;
+  height: 240px;
+  z-index: -1;
+}
