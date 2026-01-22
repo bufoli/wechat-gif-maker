@@ -106,8 +106,8 @@ Page({
             })
             console.log('云函数调用结果:', framesResult)
           } catch (cloudError) {
-            // 云函数调用失败，直接进入测试模式
-            console.error('云函数调用失败，进入测试模式:', cloudError)
+            // 云函数调用失败，检查是否是测试模式标记
+            console.error('云函数调用失败:', cloudError)
             wx.hideLoading()
             
             // 检查是否是测试模式标记
@@ -123,37 +123,44 @@ Page({
             return
           }
           
-          if (!framesResult || !framesResult.success || !framesResult.frameUrls || framesResult.frameUrls.length === 0) {
-            // 检查是否应该使用本地处理
-            if (framesResult && framesResult.useLocalProcessing) {
-              console.log('云函数返回本地处理标记，使用Canvas API提取视频帧')
+          // 检查是否应该使用本地处理（优先检查）
+          if (framesResult && framesResult.useLocalProcessing) {
+            console.log('✅ 云函数返回本地处理标记，使用Canvas API提取视频帧')
+            wx.hideLoading()
+            
+            wx.showLoading({
+              title: '正在提取视频帧...',
+              mask: true
+            })
+            
+            // 使用本地Canvas API处理
+            try {
+              const localFramesResult = await this.extractFramesLocally(tempFilePath, duration, 12, 240, 240)
+              
               wx.hideLoading()
               
-              // 使用本地Canvas API处理
-              try {
-                const localFramesResult = await this.extractFramesLocally(tempFilePath, duration, 12, 240, 240)
-                
-                if (localFramesResult && localFramesResult.success && localFramesResult.frameUrls && localFramesResult.frameUrls.length > 0) {
-                  // 本地处理成功，继续后续流程
-                  framesResult = localFramesResult
-                } else {
-                  // 本地处理失败，进入测试模式
-                  console.warn('本地处理失败，进入测试模式')
-                  this.enterTestMode(tempFilePath, duration)
-                  return
-                }
-              } catch (localError) {
-                console.error('本地处理失败:', localError)
+              if (localFramesResult && localFramesResult.success && localFramesResult.frameUrls && localFramesResult.frameUrls.length > 0) {
+                // 本地处理成功，继续后续流程
+                console.log('✅ 本地提取帧成功，帧数:', localFramesResult.frameUrls.length)
+                framesResult = localFramesResult
+              } else {
+                // 本地处理失败，进入测试模式
+                console.warn('本地处理失败，进入测试模式')
                 this.enterTestMode(tempFilePath, duration)
                 return
               }
-            } else {
-              // 云函数返回失败，直接进入测试模式
-              console.warn('序列帧生成失败，自动进入测试模式')
+            } catch (localError) {
               wx.hideLoading()
+              console.error('本地处理失败:', localError)
               this.enterTestMode(tempFilePath, duration)
               return
             }
+          } else if (!framesResult || !framesResult.success || !framesResult.frameUrls || framesResult.frameUrls.length === 0) {
+            // 云函数返回失败，直接进入测试模式
+            console.warn('序列帧生成失败，自动进入测试模式')
+            wx.hideLoading()
+            this.enterTestMode(tempFilePath, duration)
+            return
           }
 
           wx.showLoading({

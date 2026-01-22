@@ -52,6 +52,20 @@ const videoToFrames = (params) => {
       },
               success: (res) => {
                 wx.hideLoading()
+                
+                // 优先检查是否应该使用本地处理
+                if (res.result && (res.result.useLocalProcessing || res.result.error === 'USE_LOCAL_PROCESSING')) {
+                  console.log('✅ 云函数返回本地处理标记，返回给前端处理')
+                  // 返回一个特殊结果，让前端知道要使用本地处理
+                  resolve({
+                    success: false,
+                    useLocalProcessing: true,
+                    videoInfo: res.result?.videoInfo,
+                    frameUrls: []
+                  })
+                  return
+                }
+                
                 if (res.result && res.result.success) {
                   // 如果是测试模式，显示提示
                   if (res.result.message && res.result.message.includes('测试模式')) {
@@ -68,17 +82,8 @@ const videoToFrames = (params) => {
                 } else {
                   const errorMsg = res.result?.error || res.result?.message || '序列帧生成失败'
                   
-                  // 检查是否应该使用本地处理
-                  if (res.result?.useLocalProcessing || errorMsg === 'USE_LOCAL_PROCESSING') {
-                    console.log('云函数返回本地处理标记，返回给前端处理')
-                    // 返回一个特殊结果，让前端知道要使用本地处理
-                    resolve({
-                      success: false,
-                      useLocalProcessing: true,
-                      videoInfo: res.result?.videoInfo,
-                      frameUrls: []
-                    })
-                  } else if (errorMsg.includes('FFmpeg') || errorMsg.includes('需要配置') || errorMsg.includes('需要完善') || res.result?.needsFFmpeg) {
+                  // 检查是否是FFmpeg未配置的错误
+                  if (errorMsg.includes('FFmpeg') || errorMsg.includes('需要配置') || errorMsg.includes('需要完善') || res.result?.needsFFmpeg) {
                     console.log('云函数代码未完善，自动进入测试模式')
                     // 直接返回测试模式标记，不弹窗
                     reject(new Error('USE_TEST_MODE'))
