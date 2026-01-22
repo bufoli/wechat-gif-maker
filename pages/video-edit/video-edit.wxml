@@ -35,9 +35,24 @@
           <!-- 透明背景网格（用于显示透明效果） -->
           <view class="transparent-grid" wx:if="{{hasProcessed}}"></view>
           
+          <!-- 测试模式下显示视频，正常模式显示序列帧图片 -->
+          <video 
+            wx:if="{{isTestMode && originalVideoPath}}"
+            id="processedVideo"
+            src="{{originalVideoPath}}" 
+            class="preview-video"
+            controls="{{false}}"
+            show-center-play-btn="{{false}}"
+            enable-play-gesture="{{true}}"
+            object-fit="contain"
+            muted="{{true}}"
+            loop="{{isPlaying}}"
+            autoplay="{{false}}"
+          ></video>
+          
           <!-- 显示序列帧图片 -->
           <image 
-            wx:if="{{currentFrameUrl}}"
+            wx:elif="{{currentFrameUrl}}"
             id="frameImage"
             src="{{currentFrameUrl}}" 
             class="preview-image"

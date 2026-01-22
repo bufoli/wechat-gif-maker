@@ -92,17 +92,33 @@ Page({
       }
       
       console.log('测试模式：使用视频预览，视频路径:', videoPath)
+      
+      // 在测试模式下，生成一些模拟的序列帧URL（实际都是同一个视频）
+      // 这样可以让播放逻辑正常工作
+      const estimatedFrames = 60 // 假设5秒视频，12fps
+      const testFrameUrls = []
+      for (let i = 0; i < estimatedFrames; i++) {
+        testFrameUrls.push(videoPath)
+      }
+      
       this.setData({
         isTestMode: true,
         videoPath: videoPath,
         originalVideoPath: videoPath, // 测试模式下，原始视频就是上传的视频
         currentFrameUrl: videoPath,
-        frameUrls: [videoPath],
-        processedFrames: [videoPath],
+        frameUrls: testFrameUrls,
+        processedFrames: testFrameUrls,
+        originalFrames: testFrameUrls,
         hasProcessed: false,
         isPlaying: false
       })
-      console.log('测试模式数据设置完成，当前数据:', this.data)
+      
+      console.log('测试模式数据设置完成，序列帧数量:', testFrameUrls.length)
+      
+      // 自动开始播放
+      setTimeout(() => {
+        this.startPlay()
+      }, 500)
       return
     }
 
@@ -202,13 +218,44 @@ Page({
 
   // 开始播放
   startPlay() {
-    if (this.data.frameUrls.length === 0) return
+    if (this.data.frameUrls.length === 0) {
+      console.warn('没有可播放的序列帧')
+      return
+    }
 
+    console.log('开始播放，序列帧数量:', this.data.frameUrls.length, '测试模式:', this.data.isTestMode)
     this.setData({ isPlaying: true })
     
-    // 计算每帧显示时间（12fps = 每帧约83ms）
-    const frameInterval = 1000 / 12 // 约83ms
+    // 控制原始视频播放
+    if (this.data.originalVideoPath) {
+      try {
+        const originalVideoContext = wx.createVideoContext('originalVideo', this)
+        if (originalVideoContext) {
+          originalVideoContext.play()
+          console.log('原始视频开始播放')
+        }
+      } catch (err) {
+        console.error('播放原始视频失败:', err)
+      }
+    }
 
+    // 如果是测试模式，同时播放两个视频
+    if (this.data.isTestMode) {
+      console.log('测试模式：同时播放两个视频')
+      try {
+        const processedVideoContext = wx.createVideoContext('processedVideo', this)
+        if (processedVideoContext) {
+          processedVideoContext.play()
+          console.log('处理后的视频开始播放')
+        }
+      } catch (err) {
+        console.error('播放处理后视频失败:', err)
+      }
+      return
+    }
+
+    // 正常模式：切换序列帧
+    const frameInterval = 1000 / 12 // 约83ms
     this.playTimer = setInterval(() => {
       let nextIndex = (this.data.currentFrameIndex + 1) % this.data.frameUrls.length
       this.setData({
@@ -223,6 +270,23 @@ Page({
     if (this.playTimer) {
       clearInterval(this.playTimer)
       this.playTimer = null
+    }
+    if (this.data.originalVideoPath) {
+      try {
+        const originalVideoContext = wx.createVideoContext('originalVideo', this)
+        if (originalVideoContext) {
+          originalVideoContext.pause()
+        }
+        // 测试模式下也暂停处理后的视频
+        if (this.data.isTestMode) {
+          const processedVideoContext = wx.createVideoContext('processedVideo', this)
+          if (processedVideoContext) {
+            processedVideoContext.pause()
+          }
+        }
+      } catch (err) {
+        console.error('暂停视频失败:', err)
+      }
     }
     this.setData({ isPlaying: false })
   },
@@ -714,6 +778,15 @@ Page({
 
   // 执行导出GIF
   async doExportGIF(framesToExport) {
+    // 检查云开发是否可用
+    if (!wx.cloud || !wx.cloud.callFunction) {
+      wx.showModal({
+        title: '需要云开发支持',
+        content: 'GIF导出功能需要配置云开发环境。\n\n请在小程序管理后台开启云开发服务。',
+        showCancel: false
+      })
+      return
+    }
 
     wx.showLoading({
       title: '正在导出GIF...',
@@ -721,6 +794,7 @@ Page({
     })
 
     try {
+      console.log('开始调用云函数 framesToGif，序列帧数量:', framesToExport.length)
       // 调用云函数合成GIF
       const result = await frameUtils.framesToGif({
         frameUrls: framesToExport,
@@ -732,6 +806,7 @@ Page({
         fps: 12,
         maxSize: 500 * 1024
       })
+      console.log('云函数调用结果:', result)
 
       if (result.success) {
         // 下载GIF文件

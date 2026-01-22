@@ -51,6 +51,14 @@ Page({
         this.setData({ processing: true })
         
         try {
+          // 检查云开发是否可用
+          if (!wx.cloud || !wx.cloud.uploadFile || !wx.cloud.callFunction) {
+            console.warn('云开发未初始化，直接进入测试模式')
+            wx.hideLoading()
+            this.enterTestMode(tempFilePath, duration)
+            return
+          }
+
           wx.showLoading({
             title: '正在上传视频...',
             mask: true
@@ -60,21 +68,22 @@ Page({
           let uploadRes
           try {
             uploadRes = await new Promise((resolve, reject) => {
-              if (!wx.cloud || !wx.cloud.uploadFile) {
-                reject(new Error('云开发未初始化'))
-                return
-              }
-              
               wx.cloud.uploadFile({
                 cloudPath: `videos/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp4`,
                 filePath: tempFilePath,
                 success: resolve,
-                fail: reject
+                fail: (err) => {
+                  console.error('视频上传失败:', err)
+                  reject(err)
+                }
               })
             })
           } catch (uploadError) {
             wx.hideLoading()
-            throw new Error('视频上传失败，请检查云开发配置')
+            console.error('视频上传失败，进入测试模式:', uploadError)
+            // 上传失败，直接进入测试模式
+            this.enterTestMode(tempFilePath, duration)
+            return
           }
 
           wx.showLoading({
@@ -85,80 +94,37 @@ Page({
           // 调用云函数生成序列帧
           let framesResult
           try {
+            console.log('开始调用云函数 videoToFrames...')
             framesResult = await frameUtils.videoToFrames({
               videoPath: uploadRes.fileID,
               fps: 12,
               width: 240,
               height: 240
             })
+            console.log('云函数调用结果:', framesResult)
           } catch (cloudError) {
-            // 云函数调用失败，检查是否是测试模式标记
+            // 云函数调用失败，直接进入测试模式
+            console.error('云函数调用失败，进入测试模式:', cloudError)
+            wx.hideLoading()
+            
+            // 检查是否是测试模式标记
             if (cloudError.message === 'USE_TEST_MODE') {
-              // 用户选择了测试模式，直接进入测试模式
-              wx.hideLoading()
-              const estimatedFrames = Math.ceil(duration * 12)
-              const testFrameUrls = []
-              for (let i = 0; i < Math.min(estimatedFrames, 120); i++) {
-                testFrameUrls.push(tempFilePath)
-              }
-              
-              const frameUrlsStr = JSON.stringify(testFrameUrls)
-              wx.navigateTo({
-                url: `/pages/video-edit/video-edit?frameUrls=${encodeURIComponent(frameUrlsStr)}&videoPath=${encodeURIComponent(tempFilePath)}&isTestMode=true`
-              })
-              this.setData({ processing: false })
+              // 用户选择了测试模式，直接进入
+              this.enterTestMode(tempFilePath, duration)
               return
             }
             
-            // 其他错误，使用降级方案（测试模式）
-            console.warn('云函数调用失败，使用测试模式:', cloudError)
-            wx.hideLoading()
-            
-            // 提示用户，但允许使用测试模式
-            wx.showModal({
-              title: '提示',
-              content: '云函数调用失败。\n\n当前使用测试模式，可以预览界面效果。\n\n要使用完整功能，请完善videoToFrames云函数代码。',
-              showCancel: true,
-              cancelText: '取消',
-              confirmText: '继续测试',
-              success: (res) => {
-                if (res.confirm) {
-                  // 使用测试模式，直接跳转
-                  this.enterTestMode(tempFilePath, duration)
-                } else {
-                  this.setData({ processing: false })
-                }
-              },
-              fail: () => {
-                // 如果用户直接关闭弹窗，也进入测试模式
-                this.enterTestMode(tempFilePath, duration)
-              }
-            })
+            // 其他错误，也进入测试模式（不弹窗，直接进入）
+            console.warn('自动进入测试模式')
+            this.enterTestMode(tempFilePath, duration)
             return
           }
           
-          if (!framesResult.success || !framesResult.frameUrls || framesResult.frameUrls.length === 0) {
-            // 云函数返回失败，也使用降级方案
-            console.warn('序列帧生成失败，使用测试模式')
+          if (!framesResult || !framesResult.success || !framesResult.frameUrls || framesResult.frameUrls.length === 0) {
+            // 云函数返回失败，直接进入测试模式
+            console.warn('序列帧生成失败，自动进入测试模式')
             wx.hideLoading()
-            
-            wx.showModal({
-              title: '提示',
-              content: '序列帧生成失败。\n\n当前使用测试模式，可以预览界面效果。\n\n要使用完整功能，请完善videoToFrames云函数代码。',
-              showCancel: true,
-              cancelText: '取消',
-              confirmText: '继续测试',
-              success: (res) => {
-                if (res.confirm) {
-                  this.enterTestMode(tempFilePath, duration)
-                } else {
-                  this.setData({ processing: false })
-                }
-              },
-              fail: () => {
-                this.enterTestMode(tempFilePath, duration)
-              }
-            })
+            this.enterTestMode(tempFilePath, duration)
             return
           }
 
