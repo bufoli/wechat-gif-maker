@@ -154,7 +154,7 @@ Page({
           const originalVideoPath = uploadRes.fileID || tempFilePath
           
           wx.navigateTo({
-            url: `/pages/video-edit/video-edit?processedFrames=${encodeURIComponent(processedFramesStr)}&originalFrames=${encodeURIComponent(originalFramesStr)}&detectedColor=${encodeURIComponent(colorInfoStr)}&threshold=50&originalVideoPath=${encodeURIComponent(originalVideoPath)}`
+            url: `/pages/video-edit/video-edit?processedFrames=${encodeURIComponent(processedFramesStr)}&originalFrames=${encodeURIComponent(originalFramesStr)}&detectedColor=${encodeURIComponent(colorInfoStr)}&threshold=60&originalVideoPath=${encodeURIComponent(originalVideoPath)}`
           })
           
         } catch (error) {
@@ -262,7 +262,7 @@ Page({
             const processedFrame = await this.processFrameWithChromaKey(
               localFrameUrl,
               detectedColor,
-              50 // 增加默认阈值到50，更容易抠除背景
+              60 // 增加默认阈值到60，更容易抠除背景
             )
             processedFrames.push(processedFrame)
           } catch (err) {
@@ -292,7 +292,7 @@ Page({
             const processedFrame = await this.processFrameWithChromaKey(
               localFrameUrl,
               defaultColor,
-              50 // 增加默认阈值到50
+              60 // 增加默认阈值到60
             )
             processedFrames.push(processedFrame)
           } catch (err) {
@@ -340,85 +340,31 @@ Page({
     })
   },
 
-  // 检测背景颜色（分析图片边缘和角落，找出最常见的颜色）
+  // 检测背景颜色（简化版：直接获取边缘区域的所有像素）
   detectBackgroundColor(frameUrls) {
     return new Promise((resolve, reject) => {
       const ctx = wx.createCanvasContext('bgDetectCanvas', this)
       
-      // 使用第一帧进行分析（frameUrls[0] 应该是本地路径）
+      // 使用第一帧进行分析
       const imagePath = frameUrls[0]
+      console.log('开始检测背景颜色，图片路径:', imagePath)
+      
       ctx.drawImage(imagePath, 0, 0, 240, 240)
       ctx.draw(false, () => {
         setTimeout(() => {
-          // 获取整个边缘区域的所有像素（更准确）
-          // 采样边缘区域：上边缘、下边缘、左边缘、右边缘
-          const edgeSamples = []
-          
-          // 上边缘（采样10个点）
-          for (let x = 0; x < 240; x += 24) {
-            edgeSamples.push({ x, y: 0 })
-          }
-          // 下边缘（采样10个点）
-          for (let x = 0; x < 240; x += 24) {
-            edgeSamples.push({ x, y: 239 })
-          }
-          // 左边缘（采样10个点）
-          for (let y = 0; y < 240; y += 24) {
-            edgeSamples.push({ x: 0, y })
-          }
-          // 右边缘（采样10个点）
-          for (let y = 0; y < 240; y += 24) {
-            edgeSamples.push({ x: 239, y })
-          }
-          
-          // 四个角落区域（每个角落采样5x5区域）
-          const cornerRegions = [
-            { x: 0, y: 0, w: 20, h: 20 }, // 左上
-            { x: 220, y: 0, w: 20, h: 20 }, // 右上
-            { x: 0, y: 220, w: 20, h: 20 }, // 左下
-            { x: 220, y: 220, w: 20, h: 20 } // 右下
+          // 直接获取整个边缘区域（上下左右各10像素宽的区域）
+          // 这样能获取更多样本，更准确
+          const edgeRegions = [
+            { x: 0, y: 0, w: 240, h: 10 },      // 上边缘
+            { x: 0, y: 230, w: 240, h: 10 },   // 下边缘
+            { x: 0, y: 0, w: 10, h: 240 },     // 左边缘
+            { x: 230, y: 0, w: 10, h: 240 }    // 右边缘
           ]
           
-          // 获取所有边缘像素的颜色
           const colorCounts = {}
           let processedCount = 0
-          const totalSamples = edgeSamples.length + cornerRegions.length
           
-          // 处理边缘采样点
-          edgeSamples.forEach((point) => {
-            wx.canvasGetImageData({
-              canvasId: 'bgDetectCanvas',
-              x: point.x,
-              y: point.y,
-              width: 1,
-              height: 1,
-              success: (res) => {
-                const data = res.data
-                if (data && data.length >= 4) {
-                  // 将颜色量化到相近的颜色（容差±10）
-                  const r = Math.round(data[0] / 10) * 10
-                  const g = Math.round(data[1] / 10) * 10
-                  const b = Math.round(data[2] / 10) * 10
-                  const colorKey = `${r},${g},${b}`
-                  colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1
-                }
-                processedCount++
-                
-                if (processedCount === totalSamples) {
-                  this.findMostCommonColor(colorCounts, resolve)
-                }
-              },
-              fail: () => {
-                processedCount++
-                if (processedCount === totalSamples) {
-                  this.findMostCommonColor(colorCounts, resolve)
-                }
-              }
-            })
-          })
-          
-          // 处理角落区域
-          cornerRegions.forEach((region) => {
+          edgeRegions.forEach((region, index) => {
             wx.canvasGetImageData({
               canvasId: 'bgDetectCanvas',
               x: region.x,
@@ -427,40 +373,52 @@ Page({
               height: region.h,
               success: (res) => {
                 const data = res.data
-                if (data && data.length >= region.w * region.h * 4) {
-                  // 采样角落区域的所有像素
-                  for (let i = 0; i < data.length; i += 4) {
-                    const r = Math.round(data[i] / 10) * 10
-                    const g = Math.round(data[i + 1] / 10) * 10
-                    const b = Math.round(data[i + 2] / 10) * 10
-                    const colorKey = `${r},${g},${b}`
-                    colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1
-                  }
-                }
-                processedCount++
+                const pixelCount = region.w * region.h
                 
-                if (processedCount === totalSamples) {
+                console.log(`区域${index + 1}采样: ${pixelCount}个像素`)
+                
+                // 处理所有像素
+                for (let i = 0; i < data.length; i += 4) {
+                  const r = data[i]
+                  const g = data[i + 1]
+                  const b = data[i + 2]
+                  
+                  // 将颜色量化（容差±20，更宽松）
+                  const rQuantized = Math.round(r / 20) * 20
+                  const gQuantized = Math.round(g / 20) * 20
+                  const bQuantized = Math.round(b / 20) * 20
+                  const colorKey = `${rQuantized},${gQuantized},${bQuantized}`
+                  
+                  colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1
+                }
+                
+                processedCount++
+                if (processedCount === edgeRegions.length) {
                   this.findMostCommonColor(colorCounts, resolve)
                 }
               },
-              fail: () => {
+              fail: (err) => {
+                console.error(`区域${index + 1}采样失败:`, err)
                 processedCount++
-                if (processedCount === totalSamples) {
+                if (processedCount === edgeRegions.length) {
                   this.findMostCommonColor(colorCounts, resolve)
                 }
               }
             })
           })
-        }, 300) // 增加延迟确保Canvas绘制完成
+        }, 500) // 增加延迟确保Canvas绘制完成
       })
     })
   },
 
-  // 找出最常见的颜色
+  // 找出最常见的颜色（简化版）
   findMostCommonColor(colorCounts, resolve) {
+    console.log('颜色统计:', colorCounts)
+    
     let maxCount = 0
     let mostCommonColor = null
     
+    // 找出出现次数最多的颜色
     for (const [colorKey, count] of Object.entries(colorCounts)) {
       if (count > maxCount) {
         maxCount = count
@@ -468,40 +426,54 @@ Page({
       }
     }
     
-    if (mostCommonColor && maxCount > 3) { // 降低要求，至少要有3个像素匹配
+    if (mostCommonColor && maxCount > 10) {
       const [r, g, b] = mostCommonColor.split(',').map(Number)
       console.log(`✅ 检测到背景颜色: RGB(${r}, ${g}, ${b}), 匹配像素数: ${maxCount}`)
       resolve({ r, g, b })
+      return
+    }
+    
+    // 如果没有找到明显的纯色，尝试检测是否为绿色或蓝色
+    console.log('未找到明显的纯色背景，尝试检测绿色或蓝色')
+    
+    let greenCount = 0
+    let blueCount = 0
+    let greenColor = { r: 0, g: 255, b: 0 }
+    let blueColor = { r: 0, g: 0, b: 255 }
+    
+    for (const [colorKey, count] of Object.entries(colorCounts)) {
+      const [r, g, b] = colorKey.split(',').map(Number)
+      
+      // 检查是否为绿色（G值高，R和B值低）
+      if (g > 150 && r < 150 && b < 150) {
+        greenCount += count
+        // 记录最接近纯绿色的颜色
+        if (g > greenColor.g) {
+          greenColor = { r, g, b }
+        }
+      }
+      
+      // 检查是否为蓝色（B值高，R和G值低）
+      if (b > 150 && r < 150 && g < 150) {
+        blueCount += count
+        // 记录最接近纯蓝色的颜色
+        if (b > blueColor.b) {
+          blueColor = { r, g, b }
+        }
+      }
+    }
+    
+    console.log(`绿色像素数: ${greenCount}, 蓝色像素数: ${blueCount}`)
+    
+    if (greenCount > blueCount && greenCount > 20) {
+      console.log(`✅ 检测到绿色背景，使用颜色: RGB(${greenColor.r}, ${greenColor.g}, ${greenColor.b})`)
+      resolve(greenColor)
+    } else if (blueCount > greenCount && blueCount > 20) {
+      console.log(`✅ 检测到蓝色背景，使用颜色: RGB(${blueColor.r}, ${blueColor.g}, ${blueColor.b})`)
+      resolve(blueColor)
     } else {
-      // 如果没有找到明显的纯色，尝试检测是否为绿色或蓝色
-      console.log('未找到明显的纯色背景，尝试检测绿色或蓝色')
-      
-      // 检查是否有接近纯绿色或纯蓝色的颜色
-      let greenCount = 0
-      let blueCount = 0
-      
-      for (const [colorKey, count] of Object.entries(colorCounts)) {
-        const [r, g, b] = colorKey.split(',').map(Number)
-        // 检查是否为绿色（G值高，R和B值低）
-        if (g > 200 && r < 100 && b < 100) {
-          greenCount += count
-        }
-        // 检查是否为蓝色（B值高，R和G值低）
-        if (b > 200 && r < 100 && g < 100) {
-          blueCount += count
-        }
-      }
-      
-      if (greenCount > blueCount && greenCount > 5) {
-        console.log('✅ 检测到绿色背景，匹配像素数:', greenCount)
-        resolve({ r: 0, g: 255, b: 0 })
-      } else if (blueCount > greenCount && blueCount > 5) {
-        console.log('✅ 检测到蓝色背景，匹配像素数:', blueCount)
-        resolve({ r: 0, g: 0, b: 255 })
-      } else {
-        console.log('⚠️ 未明确检测到纯色背景，使用默认绿色背景')
-        resolve({ r: 0, g: 255, b: 0 })
-      }
+      console.log('⚠️ 未明确检测到纯色背景，使用默认绿色背景 RGB(0, 255, 0)')
+      resolve({ r: 0, g: 255, b: 0 })
     }
   },
 
@@ -524,20 +496,27 @@ Page({
               const imageData = res.data
               const data = new Uint8ClampedArray(imageData)
               
-              // 计算颜色距离阈值（更宽松的阈值，确保能抠除背景）
-              // threshold是0-100，转换为0-441的颜色距离（RGB最大距离是sqrt(255^2*3)≈441）
-              // 增加基础阈值，让抠图更容易成功
-              const baseThreshold = 50 // 基础阈值50，即使threshold是0也有50的容差
-              const maxDistance = baseThreshold + (threshold / 100) * 200 // 最大250的容差
-              console.log(`使用阈值: ${threshold}, 计算出的颜色距离阈值: ${maxDistance.toFixed(2)}`)
+              // 计算颜色距离阈值（使用更激进的阈值）
+              // threshold是0-100，转换为颜色距离
+              // 基础阈值100，最大可达300（非常宽松）
+              const baseThreshold = 100 // 基础阈值100
+              const maxDistance = baseThreshold + (threshold / 100) * 200 // 最大300的容差
+              
+              console.log(`🎨 抠图参数: 目标颜色 RGB(${targetColor.r}, ${targetColor.g}, ${targetColor.b}), 阈值: ${threshold}, 颜色距离阈值: ${maxDistance.toFixed(2)}`)
               
               let transparentPixels = 0
               let totalPixels = data.length / 4
+              let sampleColors = [] // 采样前10个像素的颜色，用于调试
               
               for (let i = 0; i < data.length; i += 4) {
                 const r = data[i]
                 const g = data[i + 1]
                 const b = data[i + 2]
+                
+                // 采样前10个像素的颜色
+                if (transparentPixels < 10) {
+                  sampleColors.push({ r, g, b })
+                }
                 
                 // 计算颜色距离（欧氏距离）
                 const colorDistance = Math.sqrt(
@@ -552,6 +531,8 @@ Page({
                   transparentPixels++
                 }
               }
+              
+              console.log(`前10个像素颜色样本:`, sampleColors.slice(0, 10))
               
               const transparentPercent = Math.round(transparentPixels/totalPixels*100)
               console.log(`✅ 处理帧完成，透明像素: ${transparentPixels}/${totalPixels} (${transparentPercent}%)`)
