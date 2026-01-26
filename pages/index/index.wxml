@@ -1,44 +1,79 @@
 <!--index.wxml-->
-<scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <view class="top-spacer"></view>
-    <view class="content-wrapper">
-      <!-- 头部 -->
-      <view class="header">
-        <view class="app-title">朵吉儿童绘本屋</view>
-        <view class="subtitle">陪伴孩子成长的阅读时光</view>
-      </view>
+<view class="container">
+  <!-- 顶部装饰 -->
+  <view class="top-decoration"></view>
+  
+  <!-- 主要内容 -->
+  <view class="content">
+    <!-- 标题 -->
+    <view class="header">
+      <view class="app-title">拼音学习</view>
+      <view class="subtitle">随机抽取，练习发音</view>
+    </view>
 
-      <!-- 三个板块 -->
-      <view class="section-list">
-        <view class="section-item" bindtap="selectSection" data-section="public">
-          <view class="section-icon">📚</view>
-          <view class="section-content">
-            <view class="section-name">公共版权免费绘本</view>
-            <view class="section-desc">经典童话故事，免费阅读</view>
-          </view>
-          <view class="section-arrow">›</view>
+    <!-- 拼音显示区域 -->
+    <view class="pinyin-section">
+      <view class="pinyin-card">
+        <!-- 成功动画遮罩 -->
+        <view class="success-overlay {{showSuccess ? 'show' : ''}}">
+          <view class="success-icon">✓</view>
+          <view class="success-text">读对了！</view>
         </view>
-
-        <view class="section-item" bindtap="selectSection" data-section="original">
-          <view class="section-icon">✨</view>
-          <view class="section-content">
-            <view class="section-name">朵吉原创绘本</view>
-            <view class="section-desc">独家原创故事，精彩纷呈</view>
+        
+        <!-- 拼音内容 -->
+        <view class="pinyin-content">
+          <view class="pinyin-label">请读出这个拼音</view>
+          <view class="pinyin-display">{{currentPinyinDisplay || '点击下方按钮开始'}}</view>
+          
+          <!-- 拼音分解显示 -->
+          <view class="pinyin-breakdown" wx:if="{{currentPinyinDisplay}}">
+            <view class="breakdown-item">
+              <text class="breakdown-label">声母：</text>
+              <text class="breakdown-value">{{currentInitial || '无'}}</text>
+            </view>
+            <view class="breakdown-item">
+              <text class="breakdown-label">韵母：</text>
+              <text class="breakdown-value">{{currentFinal}}</text>
+            </view>
+            <view class="breakdown-item">
+              <text class="breakdown-label">声调：</text>
+              <text class="breakdown-value">{{toneNames[currentTone]}}</text>
+            </view>
           </view>
-          <view class="section-arrow">›</view>
-        </view>
-
-        <view class="section-item" bindtap="selectSection" data-section="custom">
-          <view class="section-icon">🎨</view>
-          <view class="section-content">
-            <view class="section-name">私人订制绘本</view>
-            <view class="section-desc">专属定制，独一无二</view>
-          </view>
-          <view class="section-arrow">›</view>
         </view>
       </view>
     </view>
-    <view class="bottom-spacer"></view>
+
+    <!-- 录音按钮区域 -->
+    <view class="record-section">
+      <view class="record-btn {{isRecording ? 'recording' : ''}}" bindtap="onRecordTap">
+        <view class="record-icon">
+          <view class="mic-icon" wx:if="{{!isRecording}}">🎤</view>
+          <view class="stop-icon" wx:else>⏹</view>
+        </view>
+        <view class="record-text">
+          <text wx:if="{{!isRecording}}">点击开始录音</text>
+          <text wx:else>正在录音... {{recordingTime}}秒</text>
+        </view>
+      </view>
+      
+      <!-- 录音提示 -->
+      <view class="record-hint" wx:if="{{isRecording}}">
+        <text>请清晰读出上方拼音</text>
+      </view>
+      
+      <!-- 识别结果 -->
+      <view class="recognition-result" wx:if="{{recognitionResult && !isRecognizing}}">
+        <text class="result-label">识别结果：</text>
+        <text class="result-value">{{recognitionResult}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-section">
+      <button class="action-btn regenerate-btn" bindtap="onRegenerate">
+        <text>重新抽取</text>
+      </button>
+    </view>
   </view>
-</scroll-view>
+</view>
